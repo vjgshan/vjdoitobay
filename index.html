@@ -1,17 +1,52 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
+
 <head>
-<meta charset="UTF-8">
-<title>Đổi tổ</title>
+    <meta charset="UTF-8">
+    <title>Tra đổi tổ bay</title>
+
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<h1>ĐỔI TỔ</h1>
+<div class="container">
 
-<p>Xin chào!</p>
+    <h1>TRA ĐỔI TỔ BAY</h1>
 
-<p>Đây là website đầu tiên của tôi.</p>
+    <p class="subtitle">
+        Chọn dữ liệu trước khi bắt đầu
+    </p>
+
+    <div class="card">
+
+        <label>Tệp Excel tổ bay</label>
+
+        <input
+            type="file"
+            id="crewFile"
+            accept=".xlsx,.xls">
+
+    </div>
+
+    <div class="card">
+
+        <label>Lịch chuyến bay</label>
+
+        <input
+            type="file"
+            id="flightFile"
+            accept=".xlsx,.xls">
+
+    </div>
+
+    <button id="startBtn">
+        Tiếp tục
+    </button>
+
+</div>
+
+<script src="script.js"></script>
 
 </body>
 </html>
