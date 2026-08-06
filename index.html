@@ -1,52 +1,61 @@
 <!DOCTYPE html>
 <html lang="vi">
-
 <head>
     <meta charset="UTF-8">
-    <title>Tra đổi tổ bay</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tra Chuyến Của Tổ Bay</title>
 
     <link rel="stylesheet" href="style.css">
+
+    <!-- SheetJS -->
+    <script src="xlsx.full.min.js"></script>
 </head>
 
 <body>
 
 <div class="container">
 
-    <h1>TRA ĐỔI TỔ BAY</h1>
+    <h1>TRA CHUYẾN CỦA TỔ BAY</h1>
 
-    <p class="subtitle">
-        Chọn dữ liệu trước khi bắt đầu
-    </p>
+    <div class="upload-box">
+        <label class="upload-btn">
+            📂 Chọn Crew List
+            <input type="file" id="excelFile" accept=".xlsx,.xls" hidden>
+        </label>
 
-    <div class="card">
+        <span id="fileName">
+            Chưa chọn file
+        </span>
+    </div>
 
-        <label>Tệp Excel tổ bay</label>
+    <div class="search-box">
 
         <input
-            type="file"
-            id="crewFile"
-            accept=".xlsx,.xls">
+            type="text"
+            id="flightInput"
+            placeholder="Nhập số hiệu chuyến (VD: 915)"
+            autocomplete="off"
+        >
+
+        <button id="searchBtn">
+            🔍 Tra cứu
+        </button>
 
     </div>
 
-    <div class="card">
-
-        <label>Lịch chuyến bay</label>
-
-        <input
-            type="file"
-            id="flightFile"
-            accept=".xlsx,.xls">
-
+    <div id="status" class="status">
+        Chưa tải dữ liệu.
     </div>
 
-    <button id="startBtn">
-        Tiếp tục
-    </button>
+    <div id="result" class="result">
+
+        <!-- Kết quả sẽ sinh tại đây -->
+
+    </div>
 
 </div>
 
-<script src="script.js"></script>
+<script src="app.js"></script>
 
 </body>
 </html>
