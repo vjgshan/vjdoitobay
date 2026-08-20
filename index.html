@@ -9,6 +9,16 @@
         content="width=device-width, initial-scale=1.0"
     >
 
+    <meta
+        name="mobile-web-app-capable"
+        content="yes"
+    >
+
+    <meta
+        name="apple-mobile-web-app-capable"
+        content="yes"
+    >
+
     <title>TRA TỔ BAY</title>
 
     <link
@@ -21,6 +31,7 @@
 <body>
 
     <div class="container">
+
 
         <!-- ================================================= -->
         <!-- HEADER -->
@@ -87,11 +98,17 @@
 
         <section class="search-section">
 
+
+            <!-- ================================================= -->
+            <!-- DEPARTURE -->
+            <!-- ================================================= -->
+
             <div class="search-box">
 
                 <label for="departureFlight">
                     TỔ BAY ĐI
                 </label>
+
 
                 <div class="input-wrapper">
 
@@ -99,24 +116,39 @@
                         VJ
                     </span>
 
+
                     <input
-    type="text"
-    id="departureFlight"
-    placeholder="567"
-    inputmode="numeric"
-    pattern="[0-9]*"
-    autocomplete="off"
->
+                        type="tel"
+                        id="departureFlight"
+                        name="departureFlight"
+                        placeholder="567"
+                        inputmode="numeric"
+                        pattern="[0-9]*"
+                        maxlength="4"
+                        autocomplete="off"
+                        autocorrect="off"
+                        autocapitalize="off"
+                        spellcheck="false"
+                        enterkeyhint="next"
+                    >
 
                 </div>
 
             </div>
 
 
+            <!-- ================================================= -->
+            <!-- ARROW -->
+            <!-- ================================================= -->
+
             <div class="arrow">
                 →
             </div>
 
+
+            <!-- ================================================= -->
+            <!-- ARRIVAL -->
+            <!-- ================================================= -->
 
             <div class="search-box">
 
@@ -124,20 +156,28 @@
                     TỔ BAY ĐẾN
                 </label>
 
+
                 <div class="input-wrapper">
 
                     <span class="prefix">
                         VJ
                     </span>
 
+
                     <input
-    type="text"
-    id="arrivalFlight"
-    placeholder="464"
-    inputmode="numeric"
-    pattern="[0-9]*"
-    autocomplete="off"
->
+                        type="tel"
+                        id="arrivalFlight"
+                        name="arrivalFlight"
+                        placeholder="464"
+                        inputmode="numeric"
+                        pattern="[0-9]*"
+                        maxlength="4"
+                        autocomplete="off"
+                        autocorrect="off"
+                        autocapitalize="off"
+                        spellcheck="false"
+                        enterkeyhint="search"
+                    >
 
                 </div>
 
@@ -156,6 +196,7 @@
             <button
                 id="checkBtn"
                 class="check-button"
+                type="button"
             >
                 KIỂM TRA TỔ BAY
             </button>
@@ -186,7 +227,7 @@
 
 
     <!-- ================================================= -->
-    <!-- XLSX LIBRARY -->
+    <!-- XLSX -->
     <!-- ================================================= -->
 
     <script src="xlsx.full.min.js"></script>
@@ -197,6 +238,108 @@
     <!-- ================================================= -->
 
     <script src="app.js"></script>
+
+
+    <!-- ================================================= -->
+    <!-- INPUT CONTROL -->
+    <!-- ================================================= -->
+
+    <script>
+
+        /*
+         * Chỉ cho phép nhập số.
+         * type="tel" + inputmode="numeric"
+         * giúp Android mở bàn phím số.
+         */
+
+        const departureInput =
+            document.getElementById(
+                "departureFlight"
+            );
+
+        const arrivalInput =
+            document.getElementById(
+                "arrivalFlight"
+            );
+
+
+        function onlyNumbers(input) {
+
+            input.addEventListener(
+                "input",
+                function () {
+
+                    this.value =
+                        this.value.replace(
+                            /[^0-9]/g,
+                            ""
+                        );
+
+                }
+            );
+
+        }
+
+
+        onlyNumbers(
+            departureInput
+        );
+
+        onlyNumbers(
+            arrivalInput
+        );
+
+
+        /*
+         * Khi bấm Enter ở ô TỔ BAY ĐI
+         * chuyển sang ô TỔ BAY ĐẾN.
+         */
+
+        departureInput.addEventListener(
+            "keydown",
+            function (event) {
+
+                if (
+                    event.key === "Enter"
+                ) {
+
+                    event.preventDefault();
+
+                    arrivalInput.focus();
+
+                }
+
+            }
+        );
+
+
+        /*
+         * Khi bấm Enter ở ô TỔ BAY ĐẾN
+         * chạy kiểm tra tổ bay.
+         */
+
+        arrivalInput.addEventListener(
+            "keydown",
+            function (event) {
+
+                if (
+                    event.key === "Enter"
+                ) {
+
+                    event.preventDefault();
+
+                    document
+                        .getElementById(
+                            "checkBtn"
+                        )
+                        .click();
+
+                }
+
+            }
+        );
+
+    </script>
 
 </body>
 
