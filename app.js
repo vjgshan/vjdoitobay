@@ -1,17 +1,51 @@
 // =========================================================
-// CREW LIST - CREW PAIRING CHECK
+// TRA TỔ BAY - CREW CHECK
+// =========================================================
+//
+// LOGIC:
+//
+// 1. Đọc file Crew List Excel.
+// 2. Tự tìm cột FLT / CREW / CREW #.
+// 3. Không cố định CREW ở P/Q.
+// 4. Tra TỔ BAY ĐI và TỔ BAY ĐẾN.
+// 5. Nếu cùng số hiệu có nhiều dòng:
+//      - TỔ BAY ĐI ưu tiên chuyến DEP = HAN.
+// 6. Khi kiểm tra cặp chuyến:
+//      - CHỈ QUAN TÂM TỔ BAY ĐI.
+//      - Người dư ở TỔ BAY ĐẾN không tính.
+// 7. Nếu > 50% thành viên tổ bay đi
+//    vẫn có mặt ở tổ bay đến:
+//      => KHÔNG ĐỔI TỔ.
+// 8. Nếu <= 50%:
+//      => CÓ ĐỔI TỔ.
+// 9. Khi dò nguồn thành viên:
+//      - Tìm chuyến trước có ARR = DEP hiện tại.
+//      - Chuyến đó phải xảy ra trước chuyến hiện tại.
+//      - Có cùng thành viên.
+//      - Không tìm được => HN.
+//
+// =========================================================
+
+
+// =========================================================
+// GLOBAL DATA
 // =========================================================
 
 let flights = [];
 
 
 // =========================================================
-// ELEMENTS
+// GET ELEMENTS
 // =========================================================
 
-const excelFile = document.getElementById("excelFile");
-const fileName = document.getElementById("fileName");
-const statusBox = document.getElementById("status");
+const excelFile =
+    document.getElementById("excelFile");
+
+const fileName =
+    document.getElementById("fileName");
+
+const statusBox =
+    document.getElementById("status");
 
 const departureInput =
     document.getElementById("departureFlight");
@@ -27,67 +61,90 @@ const resultBox =
 
 
 // =========================================================
-// LOAD EXCEL
+// FILE UPLOAD
 // =========================================================
 
-excelFile.addEventListener("change", function (event) {
+if (excelFile) {
 
-    const file = event.target.files[0];
+    excelFile.addEventListener(
+        "change",
+        function (event) {
 
-    if (!file) return;
+            const file =
+                event.target.files[0];
 
-    fileName.textContent = file.name;
+            if (!file) {
+                return;
+            }
 
-    statusBox.innerHTML =
-        "⏳ Đang đọc Crew List...";
-
-    const reader = new FileReader();
-
-    reader.onload = function (e) {
-
-        try {
-
-            const workbook = XLSX.read(
-                e.target.result,
-                {
-                    type: "array",
-                    cellDates: false
-                }
-            );
-
-            const sheet =
-                workbook.Sheets[
-                    workbook.SheetNames[0]
-                ];
-
-            const rows =
-                XLSX.utils.sheet_to_json(
-                    sheet,
-                    {
-                        header: 1,
-                        defval: ""
-                    }
-                );
-
-            parseCrewList(rows);
-
-        }
-        catch (error) {
-
-            console.error(error);
-
-            flights = [];
+            fileName.textContent =
+                file.name;
 
             statusBox.innerHTML =
-                "❌ Không thể đọc file Excel.";
+                "⏳ Đang đọc Crew List...";
+
+
+            const reader =
+                new FileReader();
+
+
+            reader.onload =
+                function (e) {
+
+                    try {
+
+                        const workbook =
+                            XLSX.read(
+                                e.target.result,
+                                {
+                                    type: "array",
+                                    cellDates: false
+                                }
+                            );
+
+
+                        const sheet =
+                            workbook.Sheets[
+                                workbook.SheetNames[0]
+                            ];
+
+
+                        const rows =
+                            XLSX.utils.sheet_to_json(
+                                sheet,
+                                {
+                                    header: 1,
+                                    defval: ""
+                                }
+                            );
+
+
+                        parseCrewList(rows);
+
+                    }
+                    catch (error) {
+
+                        console.error(
+                            "Excel error:",
+                            error
+                        );
+
+                        flights = [];
+
+                        statusBox.innerHTML =
+                            "❌ Không thể đọc file Excel.";
+
+                    }
+
+                };
+
+
+            reader.readAsArrayBuffer(file);
 
         }
+    );
 
-    };
-
-    reader.readAsArrayBuffer(file);
-
-});
+}
 
 
 // =========================================================
@@ -111,7 +168,10 @@ function normalizeHeader(value) {
 // FIND COLUMN
 // =========================================================
 
-function findColumn(header, names) {
+function findColumn(
+    header,
+    names
+) {
 
     for (
         let i = 0;
@@ -124,9 +184,15 @@ function findColumn(header, names) {
                 header[i]
             );
 
-        if (!value) continue;
 
-        for (const name of names) {
+        if (!value) {
+            continue;
+        }
+
+
+        for (
+            const name of names
+        ) {
 
             if (
                 value ===
@@ -140,6 +206,7 @@ function findColumn(header, names) {
         }
 
     }
+
 
     return -1;
 
@@ -211,13 +278,18 @@ function findHeaderRow(rows) {
         const row =
             rows[i] || [];
 
+
         let hasFlight = false;
         let hasCrew = false;
 
-        for (const cell of row) {
+
+        for (
+            const cell of row
+        ) {
 
             const value =
                 normalizeHeader(cell);
+
 
             if (
                 value === "FLT" ||
@@ -229,6 +301,7 @@ function findHeaderRow(rows) {
                 hasFlight = true;
 
             }
+
 
             if (
                 value === "CREW" ||
@@ -244,6 +317,7 @@ function findHeaderRow(rows) {
 
         }
 
+
         if (
             hasFlight &&
             hasCrew
@@ -254,6 +328,7 @@ function findHeaderRow(rows) {
         }
 
     }
+
 
     return -1;
 
@@ -268,10 +343,14 @@ function parseCrewList(rows) {
 
     flights = [];
 
+
     const headerRow =
         findHeaderRow(rows);
 
-    if (headerRow === -1) {
+
+    if (
+        headerRow === -1
+    ) {
 
         statusBox.innerHTML =
             "❌ Không tìm thấy dòng header FLT / CREW.";
@@ -286,7 +365,7 @@ function parseCrewList(rows) {
 
 
     // -----------------------------------------------------
-    // FIND COLUMNS
+    // COLUMNS
     // -----------------------------------------------------
 
     const flightCol =
@@ -300,11 +379,14 @@ function parseCrewList(rows) {
             ]
         );
 
+
     const crewCol =
         findCrewColumn(header);
 
+
     const crewCountCol =
         findCrewCountColumn(header);
+
 
     const dateCol =
         findColumn(
@@ -315,11 +397,13 @@ function parseCrewList(rows) {
             ]
         );
 
+
     const typeCol =
         findColumn(
             header,
             ["TYPE"]
         );
+
 
     const regCol =
         findColumn(
@@ -329,6 +413,7 @@ function parseCrewList(rows) {
                 "REGISTRATION"
             ]
         );
+
 
     const acCol =
         findColumn(
@@ -340,6 +425,7 @@ function parseCrewList(rows) {
             ]
         );
 
+
     const depCol =
         findColumn(
             header,
@@ -348,6 +434,7 @@ function parseCrewList(rows) {
                 "FROM"
             ]
         );
+
 
     const arrCol =
         findColumn(
@@ -358,11 +445,13 @@ function parseCrewList(rows) {
             ]
         );
 
+
     const stdCol =
         findColumn(
             header,
             ["STD"]
         );
+
 
     const staCol =
         findColumn(
@@ -370,11 +459,13 @@ function parseCrewList(rows) {
             ["STA"]
         );
 
+
     const etdCol =
         findColumn(
             header,
             ["ETD"]
         );
+
 
     const etaCol =
         findColumn(
@@ -383,7 +474,9 @@ function parseCrewList(rows) {
         );
 
 
-    if (flightCol === -1) {
+    if (
+        flightCol === -1
+    ) {
 
         statusBox.innerHTML =
             "❌ Không tìm thấy cột FLT.";
@@ -393,7 +486,9 @@ function parseCrewList(rows) {
     }
 
 
-    if (crewCol === -1) {
+    if (
+        crewCol === -1
+    ) {
 
         statusBox.innerHTML =
             "❌ Không tìm thấy cột CREW.";
@@ -404,31 +499,35 @@ function parseCrewList(rows) {
 
 
     console.log(
+        "================================"
+    );
+
+    console.log(
         "HEADER ROW:",
         headerRow + 1
     );
 
     console.log(
-        "FLT COLUMN:",
+        "FLT:",
         columnLetter(flightCol)
     );
 
     console.log(
-        "CREW COLUMN:",
+        "CREW:",
         columnLetter(crewCol)
     );
 
     console.log(
-        "CREW # COLUMN:",
+        "CREW #:",
         crewCountCol >= 0
             ? columnLetter(crewCountCol)
             : "Không có"
     );
 
 
-    // -----------------------------------------------------
-    // READ DATA
-    // -----------------------------------------------------
+    // =====================================================
+    // READ ROWS
+    // =====================================================
 
     let currentFlight = null;
 
@@ -443,9 +542,9 @@ function parseCrewList(rows) {
             rows[i] || [];
 
 
-        // =================================================
+        // -------------------------------------------------
         // NEW FLIGHT
-        // =================================================
+        // -------------------------------------------------
 
         const rawFlight =
             row[flightCol];
@@ -457,7 +556,9 @@ function parseCrewList(rows) {
             ).trim();
 
 
-        if (flightText !== "") {
+        if (
+            flightText !== ""
+        ) {
 
             currentFlight = {
 
@@ -542,14 +643,18 @@ function parseCrewList(rows) {
         }
 
 
-        if (!currentFlight) {
+        if (
+            !currentFlight
+        ) {
+
             continue;
+
         }
 
 
-        // =================================================
+        // -------------------------------------------------
         // CREW
-        // =================================================
+        // -------------------------------------------------
 
         const crewValue =
             row[crewCol];
@@ -558,7 +663,9 @@ function parseCrewList(rows) {
         if (
             crewValue === undefined ||
             crewValue === null ||
-            String(crewValue).trim() === ""
+            String(
+                crewValue
+            ).trim() === ""
         ) {
 
             continue;
@@ -572,10 +679,12 @@ function parseCrewList(rows) {
             )
             .split(/\r?\n/)
             .map(
-                x => x.trim()
+                x =>
+                    x.trim()
             )
             .filter(
-                x => x !== ""
+                x =>
+                    x !== ""
             );
 
 
@@ -583,9 +692,7 @@ function parseCrewList(rows) {
             member => {
 
                 const crew =
-                    parseCrew(
-                        member
-                    );
+                    parseCrew(member);
 
 
                 if (
@@ -652,6 +759,7 @@ function parseCrewList(rows) {
 
     let totalCrew = 0;
 
+
     flights.forEach(
         flight => {
 
@@ -679,7 +787,9 @@ function parseCrewList(rows) {
         "<small>" +
 
         "Header: dòng " +
-        (headerRow + 1) +
+        (
+            headerRow + 1
+        ) +
 
         " | FLT: cột " +
         columnLetter(flightCol) +
@@ -690,9 +800,7 @@ function parseCrewList(rows) {
         (
             crewCountCol >= 0
                 ? " | CREW #: cột " +
-                  columnLetter(
-                      crewCountCol
-                  )
+                  columnLetter(crewCountCol)
                 : ""
         ) +
 
@@ -804,9 +912,6 @@ function parseCrew(text) {
 
     // -----------------------------------------------------
     // LẤY ROLE TRONG NGOẶC
-    // Ví dụ:
-    // NGUYEN VAN A(CP)
-    // NGUYEN VAN A(CP, DHD)
     // -----------------------------------------------------
 
     const matches =
@@ -825,30 +930,33 @@ function parseCrew(text) {
 
                 let inside =
                     item
-                        .replace(
-                            /^\(/,
-                            ""
-                        )
-                        .replace(
-                            /\)$/,
-                            ""
-                        )
-                        .trim();
+                    .replace(
+                        /^\(/,
+                        ""
+                    )
+                    .replace(
+                        /\)$/,
+                        ""
+                    )
+                    .trim();
 
 
                 inside =
                     inside
-                        .split(",")
-                        .map(
-                            x => x.trim()
-                        )
-                        .filter(
-                            x =>
-                                x &&
-                                x.toUpperCase() !==
-                                "DHD"
-                        )
-                        .join(" / ");
+                    .split(",")
+                    .map(
+                        x =>
+                            x.trim()
+                    )
+                    .filter(
+                        x =>
+                            x &&
+                            x.toUpperCase() !==
+                            "DHD"
+                    )
+                    .join(
+                        " / "
+                    );
 
 
                 if (inside) {
@@ -864,18 +972,31 @@ function parseCrew(text) {
 
 
         role =
-            roles.join(" / ");
+            roles.join(
+                " / "
+            );
 
     }
 
 
     // -----------------------------------------------------
-    // XÓA NGOẶC
+    // XÓA ROLE
     // -----------------------------------------------------
 
     value =
         value.replace(
             /\(.*?\)/g,
+            ""
+        );
+
+
+    // -----------------------------------------------------
+    // XÓA DẤU -
+    // -----------------------------------------------------
+
+    value =
+        value.replace(
+            /^\s*-\s*/,
             ""
         );
 
@@ -892,21 +1013,16 @@ function parseCrew(text) {
 
 
     value =
-        value.replace(
-            /^\s*-\s*/,
-            ""
-        );
-
-
-    value =
         value.trim();
 
 
     return {
 
-        role: role,
+        role:
+            role,
 
-        name: value
+        name:
+            value
 
     };
 
@@ -916,38 +1032,53 @@ function parseCrew(text) {
 // =========================================================
 // FIND FLIGHT
 // =========================================================
+//
+// fromHAN = true
+//
+// Nếu có:
+//
+// 7988 HAN -> xxx
+// 7988 xxx -> HAN
+//
+// khi tra TỔ BAY ĐI 7988
+// sẽ chọn chuyến DEP = HAN.
+//
+// =========================================================
 
-// =========================================================
-// FIND FLIGHT
-// =========================================================
-// Khi có nhiều chuyến cùng số hiệu:
-// Ưu tiên chuyến BAY TỪ HAN
-// =========================================================
-
-function findFlight(number, options = {}) {
+function findFlight(
+    number,
+    options = {}
+) {
 
     const target =
-        normalizeFlightNumber(number);
+        normalizeFlightNumber(
+            number
+        );
+
 
     const candidates =
         flights.filter(
             flight =>
+
                 normalizeFlightNumber(
                     flight.flight
                 ) === target
+
         );
 
 
-    if (!candidates.length) {
+    if (
+        !candidates.length
+    ) {
 
         return null;
 
     }
 
 
-    // =====================================================
-    // Nếu yêu cầu chuyến đi từ HAN
-    // =====================================================
+    // -----------------------------------------------------
+    // ƯU TIÊN HAN
+    // -----------------------------------------------------
 
     if (
         options.fromHAN === true
@@ -956,9 +1087,11 @@ function findFlight(number, options = {}) {
         const hanFlight =
             candidates.find(
                 flight =>
+
                     normalizeAirport(
                         flight.dep
                     ) === "HAN"
+
             );
 
 
@@ -971,9 +1104,9 @@ function findFlight(number, options = {}) {
     }
 
 
-    // =====================================================
-    // Nếu chỉ có một chuyến
-    // =====================================================
+    // -----------------------------------------------------
+    // CHỈ CÓ 1
+    // -----------------------------------------------------
 
     if (
         candidates.length === 1
@@ -984,96 +1117,15 @@ function findFlight(number, options = {}) {
     }
 
 
-    // =====================================================
-    // Có nhiều chuyến nhưng không xác định được HAN
-    // =====================================================
+    // -----------------------------------------------------
+    // NHIỀU CHUYẾN
+    // -----------------------------------------------------
+    //
+    // Không có HAN thì lấy record đầu tiên.
+    //
+    // -----------------------------------------------------
 
     return candidates[0];
-
-}
-
-
-// =========================================================
-// DATE + TIME
-// =========================================================
-
-function getFlightDateTime(
-    flight
-) {
-
-    if (!flight) {
-        return NaN;
-    }
-
-
-    let time =
-        flight.etd;
-
-
-    if (
-        time === "" ||
-        time === null ||
-        time === undefined
-    ) {
-
-        time =
-            flight.std;
-
-    }
-
-
-    return parseDateTime(
-        flight.date,
-        time
-    );
-
-}
-
-
-// =========================================================
-// PARSE DATETIME
-// =========================================================
-
-function parseDateTime(
-    dateValue,
-    timeValue
-) {
-
-    const date =
-        parseDate(
-            dateValue
-        );
-
-
-    const time =
-        parseTime(
-            timeValue
-        );
-
-
-    if (
-        !date ||
-        !time
-    ) {
-
-        return NaN;
-
-    }
-
-
-    return new Date(
-
-        date.year,
-        date.month - 1,
-        date.day,
-
-        time.hour,
-        time.minute,
-
-        0,
-        0
-
-    ).getTime();
 
 }
 
@@ -1121,7 +1173,8 @@ function parseDate(value) {
         const date =
             new Date(
                 epoch.getTime() +
-                value * 86400000
+                value *
+                86400000
             );
 
 
@@ -1180,9 +1233,11 @@ function parseDate(value) {
 
 
         return {
+
             year,
             month,
             day
+
         };
 
     }
@@ -1270,7 +1325,7 @@ function parseTime(value) {
         typeof value === "number"
     ) {
 
-        // Excel time fraction
+        // Excel time
         if (
             value >= 0 &&
             value < 1
@@ -1318,8 +1373,10 @@ function parseTime(value) {
         ) {
 
             return {
+
                 hour,
                 minute
+
             };
 
         }
@@ -1387,8 +1444,10 @@ function parseTime(value) {
         ) {
 
             return {
+
                 hour,
                 minute
+
             };
 
         }
@@ -1402,49 +1461,270 @@ function parseTime(value) {
 
 
 // =========================================================
-// BUTTON
+// GET FLIGHT DATETIME
 // =========================================================
 
-checkBtn.addEventListener(
-    "click",
-    checkCrew
-);
+function getFlightDateTime(flight) {
+
+    if (!flight) {
+        return NaN;
+    }
 
 
-// =========================================================
-// ENTER KEY
-// =========================================================
+    let time =
+        flight.etd;
 
-departureInput.addEventListener(
-    "keydown",
-    function (event) {
 
-        if (
-            event.key === "Enter"
-        ) {
+    if (
+        time === "" ||
+        time === null ||
+        time === undefined
+    ) {
 
-            arrivalInput.focus();
-
-        }
+        time =
+            flight.std;
 
     }
-);
 
 
-arrivalInput.addEventListener(
-    "keydown",
-    function (event) {
+    const date =
+        parseDate(
+            flight.date
+        );
 
-        if (
-            event.key === "Enter"
-        ) {
 
-            checkCrew();
+    const parsedTime =
+        parseTime(
+            time
+        );
 
-        }
+
+    if (
+        !date ||
+        !parsedTime
+    ) {
+
+        return NaN;
 
     }
-);
+
+
+    return new Date(
+
+        date.year,
+        date.month - 1,
+        date.day,
+
+        parsedTime.hour,
+        parsedTime.minute,
+        0,
+        0
+
+    ).getTime();
+
+}
+
+
+// =========================================================
+// FIND SOURCE FOR CREW
+// =========================================================
+//
+// Điều kiện:
+//
+// 1. Chuyến trước ARR = chuyến hiện tại DEP.
+// 2. Có thành viên giống nhau.
+// 3. Chuyến trước xảy ra trước chuyến hiện tại.
+// 4. Chọn chuyến gần nhất.
+//
+// Nếu không tìm thấy => HN.
+//
+// =========================================================
+
+function findSourceForCrew(
+    currentFlight,
+    crew
+) {
+
+    const currentTime =
+        getFlightDateTime(
+            currentFlight
+        );
+
+
+    const currentDep =
+        normalizeAirport(
+            currentFlight.dep
+        );
+
+
+    const personName =
+        normalizeName(
+            crew.name
+        );
+
+
+    const candidates = [];
+
+
+    flights.forEach(
+        flight => {
+
+            // ---------------------------------------------
+            // Không lấy chính chuyến hiện tại
+            // ---------------------------------------------
+
+            if (
+                flight ===
+                currentFlight
+            ) {
+
+                return;
+
+            }
+
+
+            if (
+                !flight.crew ||
+                !flight.crew.length
+            ) {
+
+                return;
+
+            }
+
+
+            // ---------------------------------------------
+            // ARR phải là sân bay DEP hiện tại
+            // ---------------------------------------------
+
+            const previousArr =
+                normalizeAirport(
+                    flight.arr
+                );
+
+
+            if (
+                !currentDep ||
+                previousArr !== currentDep
+            ) {
+
+                return;
+
+            }
+
+
+            // ---------------------------------------------
+            // Thời gian
+            // ---------------------------------------------
+
+            const previousTime =
+                getFlightDateTime(
+                    flight
+                );
+
+
+            if (
+                !isFinite(currentTime) ||
+                !isFinite(previousTime)
+            ) {
+
+                return;
+
+            }
+
+
+            if (
+                previousTime >=
+                currentTime
+            ) {
+
+                return;
+
+            }
+
+
+            // ---------------------------------------------
+            // Có người đó?
+            // ---------------------------------------------
+
+            const found =
+                flight.crew.some(
+                    member =>
+
+                        normalizeName(
+                            member.name
+                        ) ===
+                        personName
+                );
+
+
+            if (!found) {
+                return;
+            }
+
+
+            candidates.push({
+
+                flight:
+                    flight,
+
+                difference:
+                    currentTime -
+                    previousTime
+
+            });
+
+        }
+    );
+
+
+    // -----------------------------------------------------
+    // CHUYẾN GẦN NHẤT
+    // -----------------------------------------------------
+
+    candidates.sort(
+        (a, b) =>
+            a.difference -
+            b.difference
+    );
+
+
+    if (
+        candidates.length
+    ) {
+
+        return candidates[0].flight;
+
+    }
+
+
+    return null;
+
+}
+
+
+// =========================================================
+// GET CREW SOURCES
+// =========================================================
+
+function getCrewSources(flight) {
+
+    return flight.crew.map(
+        crew => ({
+
+            crew:
+                crew,
+
+            source:
+                findSourceForCrew(
+                    flight,
+                    crew
+                )
+
+        })
+    );
+
+}
 
 
 // =========================================================
@@ -1455,18 +1735,22 @@ function checkCrew() {
 
     const fromNumber =
         normalizeFlightNumber(
-            departureInput.value
+            departureInput
+                ? departureInput.value
+                : ""
         );
 
 
     const toNumber =
         normalizeFlightNumber(
-            arrivalInput.value
+            arrivalInput
+                ? arrivalInput.value
+                : ""
         );
 
 
     // -----------------------------------------------------
-    // CHỈ NHẬP CHUYẾN ĐI
+    // CHỈ NHẬP TỔ BAY ĐI
     // -----------------------------------------------------
 
     if (
@@ -1503,7 +1787,7 @@ function checkCrew() {
 
 
     // -----------------------------------------------------
-    // CHỈ NHẬP CHUYẾN ĐẾN
+    // CHỈ NHẬP TỔ BAY ĐẾN
     // -----------------------------------------------------
 
     if (
@@ -1528,16 +1812,29 @@ function checkCrew() {
 
 
 // =========================================================
-// COMPARE TWO FLIGHTS
+// COMPARE PAIR
 // =========================================================
 //
-// QUAN TRỌNG:
+// QUY TẮC:
 //
-// Nếu giống nhau:
-//     → KHÔNG ĐỔI TỔ
+// Ví dụ VJ781:
 //
-// Nếu khác nhau:
-//     → CHỈ HIỆN VJ chuyến ĐI
+// Tổ đi = 8 người
+//
+// Tổ đến:
+// - 6 người trùng
+// - 2 người không trùng
+//
+// 6 / 8 = 75%
+//
+// => KHÔNG ĐỔI TỔ.
+//
+//
+//
+// Mốc:
+//
+// > 50%  => KHÔNG ĐỔI TỔ
+// <= 50% => CÓ ĐỔI TỔ
 //
 // =========================================================
 
@@ -1546,19 +1843,27 @@ function comparePair(
     toNumber
 ) {
 
+    // -----------------------------------------------------
+    // TÌM CHUYẾN ĐI
+    // -----------------------------------------------------
+
     const fromFlight =
-    findFlight(
-        fromNumber,
-        {
-            fromHAN: true
-        }
-    );
+        findFlight(
+            fromNumber,
+            {
+                fromHAN: true
+            }
+        );
 
 
-let toFlight =
-    findFlight(
-        toNumber
-    );
+    // -----------------------------------------------------
+    // TÌM CHUYẾN ĐẾN
+    // -----------------------------------------------------
+
+    const toFlight =
+        findFlight(
+            toNumber
+        );
 
 
     if (!fromFlight) {
@@ -1566,9 +1871,7 @@ let toFlight =
         showError(
 
             "Không tìm thấy chuyến bay <b>VJ" +
-            escapeHtml(
-                fromNumber
-            ) +
+            escapeHtml(fromNumber) +
             "</b>."
 
         );
@@ -1583,9 +1886,7 @@ let toFlight =
         showError(
 
             "Không tìm thấy chuyến bay <b>VJ" +
-            escapeHtml(
-                toNumber
-            ) +
+            escapeHtml(toNumber) +
             "</b>."
 
         );
@@ -1595,16 +1896,19 @@ let toFlight =
     }
 
 
+    // -----------------------------------------------------
+    // KIỂM TRA CREW
+    // -----------------------------------------------------
+
     if (
+        !fromFlight.crew ||
         !fromFlight.crew.length
     ) {
 
         showError(
 
             "VJ" +
-            escapeHtml(
-                fromNumber
-            ) +
+            escapeHtml(fromNumber) +
             " không có dữ liệu tổ bay."
 
         );
@@ -1615,15 +1919,14 @@ let toFlight =
 
 
     if (
+        !toFlight.crew ||
         !toFlight.crew.length
     ) {
 
         showError(
 
             "VJ" +
-            escapeHtml(
-                toNumber
-            ) +
+            escapeHtml(toNumber) +
             " không có dữ liệu tổ bay."
 
         );
@@ -1633,70 +1936,133 @@ let toFlight =
     }
 
 
-    // -----------------------------------------------------
-    // TẠO SET TÊN
-    // -----------------------------------------------------
-
-    const fromSet =
-        new Set(
-            fromFlight.crew.map(
-                crew =>
-                    normalizeName(
-                        crew.name
-                    )
-            )
-        );
-
+    // =====================================================
+    // SET TỔ BAY ĐẾN
+    // =====================================================
 
     const toSet =
         new Set(
+
             toFlight.crew.map(
                 crew =>
                     normalizeName(
                         crew.name
                     )
             )
+
         );
 
 
-    // -----------------------------------------------------
-    // SO SÁNH 2 CHIỀU
-    // -----------------------------------------------------
+    // =====================================================
+    // NGƯỜI TỔ ĐI ĐƯỢC GIỮ
+    // =====================================================
 
-    const removed =
+    const keptCrew =
         fromFlight.crew.filter(
+
+            crew =>
+                toSet.has(
+                    normalizeName(
+                        crew.name
+                    )
+                )
+
+        );
+
+
+    // =====================================================
+    // NGƯỜI TỔ ĐI KHÔNG ĐƯỢC GIỮ
+    // =====================================================
+
+    const notKeptCrew =
+        fromFlight.crew.filter(
+
             crew =>
                 !toSet.has(
                     normalizeName(
                         crew.name
                     )
                 )
+
         );
 
 
-    const added =
-        toFlight.crew.filter(
-            crew =>
-                !fromSet.has(
-                    normalizeName(
-                        crew.name
-                    )
-                )
-        );
+    const totalCrew =
+        fromFlight.crew.length;
+
+
+    const keptCount =
+        keptCrew.length;
+
+
+    const notKeptCount =
+        notKeptCrew.length;
+
+
+    const keptPercent =
+        totalCrew > 0
+
+            ? (
+                keptCount /
+                totalCrew
+            ) * 100
+
+            : 0;
+
+
+    console.log(
+        "=============================="
+    );
+
+    console.log(
+        "TỔ BAY ĐI:",
+        fromFlight.flight
+    );
+
+    console.log(
+        "TỔ BAY ĐẾN:",
+        toFlight.flight
+    );
+
+    console.log(
+        "TỔNG:",
+        totalCrew
+    );
+
+    console.log(
+        "GIỮ:",
+        keptCount
+    );
+
+    console.log(
+        "KHÔNG GIỮ:",
+        notKeptCount
+    );
+
+    console.log(
+        "TỶ LỆ:",
+        keptPercent + "%"
+    );
 
 
     // =====================================================
     // KHÔNG ĐỔI TỔ
     // =====================================================
+    //
+    // Nếu đa số (>50%) tổ bay đi vẫn còn.
+    //
+    // =====================================================
 
     if (
-        removed.length === 0 &&
-        added.length === 0
+        keptPercent > 50
     ) {
 
-        showNoChange(
+        showNoChangeMajority(
             fromFlight,
-            toFlight
+            toFlight,
+            keptCount,
+            totalCrew,
+            notKeptCrew
         );
 
         return;
@@ -1706,14 +2072,12 @@ let toFlight =
 
     // =====================================================
     // CÓ ĐỔI TỔ
-    // CHỈ HIỆN CHUYẾN ĐI
     // =====================================================
 
     showChangedDepartureOnly(
         fromFlight,
         toFlight,
-        removed,
-        added
+        notKeptCrew
     );
 
 }
@@ -1723,231 +2087,158 @@ let toFlight =
 // SHOW NO CHANGE
 // =========================================================
 
-function showNoChange(
-    fromFlight,
-    toFlight
-) {
-
-    resultBox.innerHTML = `
-
-        <div class="no-change">
-
-            <div class="no-change-icon">
-                🟢
-            </div>
-
-            <div class="no-change-title">
-                KHÔNG ĐỔI TỔ
-            </div>
-
-            <div class="no-change-detail">
-
-                VJ${escapeHtml(
-                    fromFlight.flight
-                )}
-
-                →
-
-                VJ${escapeHtml(
-                    toFlight.flight
-                )}
-
-                <br>
-
-                Hai chuyến bay có cùng tổ bay.
-
-            </div>
-
-        </div>
-
-    `;
-
-}
-
-
 // =========================================================
-// SHOW CHANGE - ONLY DEPARTURE
+// SHOW NO CHANGE - MAJORITY
+// =========================================================
+//
+// Đa số tổ bay đi vẫn tiếp tục ở tổ bay đến.
+//
+// Ví dụ:
+//
+// Tổ đi: 8 người
+// Trùng: 6 người
+// Không trùng: 2 người
+//
+// 6 / 8 = 75%
+//
+// => KHÔNG ĐỔI TỔ
+//
+// Nhưng vẫn hiển thị 2 người không tiếp tục
+// và dò xem họ đến từ đâu.
 // =========================================================
 
-// =========================================================
-// SHOW CHANGE - DEPARTURE CREW + CREW SOURCE
-// =========================================================
-
-function showChangedDepartureOnly(
+function showNoChangeMajority(
     fromFlight,
     toFlight,
-    removed,
-    added
+    keptCount,
+    totalCrew,
+    notKeptCrew
 ) {
 
+    const percent =
+        totalCrew > 0
+            ? Math.round(
+                (
+                    keptCount /
+                    totalCrew
+                ) * 100
+            )
+            : 0;
+
+
     // =====================================================
-    // TÌM NGUỒN TỪNG THÀNH VIÊN CỦA CHUYẾN ĐI
+    // DÒ NGUỒN CỦA NHỮNG NGƯỜI KHÔNG TIẾP TỤC
     // =====================================================
 
-    const crewSources =
-        getCrewSources(
-            fromFlight
+    const notKeptSources =
+        notKeptCrew.map(
+            crew => {
+
+                return {
+
+                    crew: crew,
+
+                    source:
+                        findSourceForCrew(
+                            fromFlight,
+                            crew
+                        )
+
+                };
+
+            }
         );
 
 
     // =====================================================
-    // HIỂN THỊ TỪNG THÀNH VIÊN + NGUỒN
+    // TẠO DANH SÁCH
     // =====================================================
 
-    let crewHtml = "";
+    let membersHtml = "";
 
 
-    crewSources.forEach(
+    notKeptSources.forEach(
         item => {
-
-            const crew =
-                item.crew;
-
 
             const source =
-                item.source;
-
-
-            const sourceText =
-                source
-                    ? "VJ" +
-                      source.flight
-                    : "HN";
-
-
-            const sourceClass =
-                source
-                    ? "crew-source-flight"
-                    : "crew-source-hn";
-
-
-            crewHtml += `
-
-                <div class="crew-member">
-
-                    <div class="crew-role">
-
-                        ${escapeHtml(
-                            crew.role
-                        )}
-
-                    </div>
-
-
-                    <div class="crew-name">
-
-                        ${escapeHtml(
-                            crew.name
-                        )}
-
-                    </div>
-
-
-                    <div
-                        class="${sourceClass}"
-                        style="
-                            margin-left:auto;
-                            min-width:75px;
-                            text-align:right;
-                            font-size:12px;
-                            font-weight:800;
-                        "
-                    >
-
-                        ← ${escapeHtml(
-                            sourceText
-                        )}
-
-                    </div>
-
-                </div>
-
-            `;
-
-        }
-    );
-
-
-    // =====================================================
-    // TÓM TẮT NGUỒN
-    // =====================================================
-
-    const sourceGroups =
-        new Map();
-
-
-    crewSources.forEach(
-        item => {
-
-            const key =
                 item.source
                     ? "VJ" +
                       item.source.flight
                     : "HN";
 
 
-            if (
-                !sourceGroups.has(key)
-            ) {
+            membersHtml += `
 
-                sourceGroups.set(
-                    key,
-                    0
-                );
-
-            }
-
-
-            sourceGroups.set(
-                key,
-                sourceGroups.get(key) + 1
-            );
-
-        }
-    );
-
-
-    let sourceSummary = "";
-
-
-    sourceGroups.forEach(
-        (count, source) => {
-
-            sourceSummary += `
-
-                <span
+                <div
                     style="
-                        display:inline-flex;
+                        display:flex;
                         align-items:center;
-                        gap:6px;
-                        margin-right:15px;
-                        margin-bottom:6px;
-                        padding:6px 10px;
-                        border-radius:6px;
-                        background:${
-                            source === "HN"
-                                ? "#e2e8f0"
-                                : "#dbeafe"
-                        };
-                        color:${
-                            source === "HN"
-                                ? "#475569"
-                                : "#0f4c81"
-                        };
-                        font-size:12px;
-                        font-weight:800;
+                        gap:10px;
+                        padding:11px 14px;
+                        border-bottom:1px solid #e5e7eb;
+                        background:#ffffff;
                     "
                 >
 
-                    ${escapeHtml(
-                        source
-                    )}
+                    <!-- ROLE -->
 
-                    <span>
-                        ${count} người
-                    </span>
+                    <div
+                        style="
+                            min-width:42px;
+                            color:#64748b;
+                            font-size:12px;
+                            font-weight:800;
+                        "
+                    >
 
-                </span>
+                        ${escapeHtml(
+                            item.crew.role
+                        )}
+
+                    </div>
+
+
+                    <!-- NAME -->
+
+                    <div
+                        style="
+                            flex:1;
+                            color:#1e3a5f;
+                            font-size:13px;
+                            font-weight:700;
+                        "
+                    >
+
+                        ${escapeHtml(
+                            item.crew.name
+                        )}
+
+                    </div>
+
+
+                    <!-- SOURCE -->
+
+                    <div
+                        style="
+                            min-width:65px;
+                            text-align:right;
+                            color:${
+                                source === "HN"
+                                    ? "#64748b"
+                                    : "#e21b23"
+                            };
+                            font-size:12px;
+                            font-weight:800;
+                        "
+                    >
+
+                        ← ${escapeHtml(
+                            source
+                        )}
+
+                    </div>
+
+                </div>
 
             `;
 
@@ -1956,222 +2247,48 @@ function showChangedDepartureOnly(
 
 
     // =====================================================
-    // KẾT QUẢ
+    // KHỐI NGƯỜI KHÔNG TIẾP TỤC
     // =====================================================
 
-    let html = `
-
-        <div class="change-result">
-
-            <div class="change-icon">
-                🔴
-            </div>
+    let notKeptHtml = "";
 
 
-            <div class="change-title">
-                CÓ ĐỔI TỔ
-            </div>
+    if (
+        notKeptSources.length > 0
+    ) {
 
-
-            <div class="change-detail">
-
-                Cặp chuyến:
-
-                <b>
-                    VJ${escapeHtml(
-                        fromFlight.flight
-                    )}
-                </b>
-
-                →
-
-                <b>
-                    VJ${escapeHtml(
-                        toFlight.flight
-                    )}
-                </b>
-
-            </div>
-
-        </div>
-
-
-        <div class="result-card">
-
-            <div class="result-header">
-
-                <div>
-
-                    <div class="result-title">
-
-                        TỔ BAY VJ${escapeHtml(
-                            fromFlight.flight
-                        )}
-
-                    </div>
-
-
-                    <div class="result-subtitle">
-
-                        ${escapeHtml(
-                            fromFlight.dep
-                        )}
-
-                        →
-
-                        ${escapeHtml(
-                            fromFlight.arr
-                        )}
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- =========================================
-                 NGUỒN TỔ BAY
-                 ========================================= -->
+        notKeptHtml = `
 
             <div
                 style="
-                    padding:14px 16px;
+                    margin-top:14px;
                     background:#f8fafc;
-                    border-bottom:1px solid #dbe3ec;
+                    border:1px solid #dbe3ec;
+                    border-radius:10px;
+                    overflow:hidden;
                 "
             >
 
                 <div
                     style="
+                        padding:12px 14px;
+                        background:#eef2f7;
+                        color:#334155;
                         font-size:11px;
                         font-weight:800;
-                        color:#64748b;
-                        letter-spacing:.8px;
-                        margin-bottom:8px;
+                        letter-spacing:.6px;
                     "
                 >
 
-                    NGUỒN TỔ BAY
-
-                </div>
-
-
-                <div>
-
-                    ${sourceSummary}
-
-                </div>
-
-            </div>
-
-
-            <!-- =========================================
-                 CREW
-                 ========================================= -->
-
-            <div class="crew-list">
-
-                ${crewHtml}
-
-            </div>
-
-        </div>
-
-    `;
-
-
-    // =====================================================
-    // CHI TIẾT THAY ĐỔI
-    // =====================================================
-
-    if (
-        removed.length ||
-        added.length
-    ) {
-
-        html += `
-
-            <div class="difference">
-
-                <div class="difference-title">
-
-                    THÀNH VIÊN THAY ĐỔI SO VỚI VJ${escapeHtml(
+                    THÀNH VIÊN KHÔNG TIẾP TỤC
+                    Ở VJ${escapeHtml(
                         toFlight.flight
                     )}
 
                 </div>
 
-        `;
 
-
-        removed.forEach(
-            crew => {
-
-                html += `
-
-                    <div class="difference-row">
-
-                        <span class="removed">
-                            ❌
-                        </span>
-
-                        <span>
-                            ${escapeHtml(
-                                crew.role
-                            )}
-                        </span>
-
-                        <span class="removed">
-
-                            ${escapeHtml(
-                                crew.name
-                            )}
-
-                        </span>
-
-                    </div>
-
-                `;
-
-            }
-        );
-
-
-        added.forEach(
-            crew => {
-
-                html += `
-
-                    <div class="difference-row">
-
-                        <span class="added">
-                            ➕
-                        </span>
-
-                        <span>
-                            ${escapeHtml(
-                                crew.role
-                            )}
-                        </span>
-
-                        <span class="added">
-
-                            ${escapeHtml(
-                                crew.name
-                            )}
-
-                        </span>
-
-                    </div>
-
-                `;
-
-            }
-        );
-
-
-        html += `
+                ${membersHtml}
 
             </div>
 
@@ -2180,24 +2297,25 @@ function showChangedDepartureOnly(
     }
 
 
-    resultBox.innerHTML =
-        html;
+    // =====================================================
+    // KẾT QUẢ
+    // =====================================================
 
-} {
+    resultBox.innerHTML = `
 
-    let html = `
+        <div class="no-change">
 
-        <div class="change-result">
-
-            <div class="change-icon">
-                🔴
+            <div class="no-change-icon">
+                ✓
             </div>
 
-            <div class="change-title">
-                CÓ ĐỔI TỔ
+
+            <div class="no-change-title">
+                KHÔNG ĐỔI TỔ
             </div>
 
-            <div class="change-detail">
+
+            <div class="no-change-detail">
 
                 Cặp chuyến:
 
@@ -2215,350 +2333,39 @@ function showChangedDepartureOnly(
                     )}
                 </b>
 
-            </div>
 
-        </div>
-
-
-        <div class="result-card">
-
-            <div class="result-header">
-
-                <div>
-
-                    <div class="result-title">
-
-                        TỔ BAY VJ${escapeHtml(
-                            fromFlight.flight
-                        )}
-
-                    </div>
-
-                    <div class="result-subtitle">
-
-                        ${escapeHtml(
-                            fromFlight.dep
-                        )}
-
-                        →
-
-                        ${escapeHtml(
-                            fromFlight.arr
-                        )}
-
-                    </div>
-
-                </div>
-
-            </div>
+                <br><br>
 
 
-            <div class="crew-list">
+                <strong>
+                    ${keptCount}/${totalCrew}
+                </strong>
 
-                ${renderCrewList(
-                    fromFlight.crew,
-                    removed
-                )}
+                thành viên của tổ bay đi
+                vẫn tiếp tục ở
+
+                <strong>
+                    VJ${escapeHtml(
+                        toFlight.flight
+                    )}
+                </strong>.
+
+
+                <br>
+
+
+                <strong>
+                    ${percent}% tổ bay được giữ nguyên.
+                </strong>
+
+
+                ${notKeptHtml}
 
             </div>
 
         </div>
 
     `;
-
-
-    // -----------------------------------------------------
-    // CHI TIẾT KHÁC BIỆT
-    // -----------------------------------------------------
-
-    if (
-        removed.length ||
-        added.length
-    ) {
-
-        html += `
-
-            <div class="difference">
-
-                <div class="difference-title">
-
-                    THÀNH VIÊN THAY ĐỔI
-
-                </div>
-
-        `;
-
-
-        removed.forEach(
-            crew => {
-
-                html += `
-
-                    <div class="difference-row">
-
-                        <span class="removed">
-                            ❌
-                        </span>
-
-                        <span>
-                            ${escapeHtml(
-                                crew.role
-                            )}
-                        </span>
-
-                        <span class="removed">
-
-                            ${escapeHtml(
-                                crew.name
-                            )}
-
-                        </span>
-
-                    </div>
-
-                `;
-
-            }
-        );
-
-
-        added.forEach(
-            crew => {
-
-                html += `
-
-                    <div class="difference-row">
-
-                        <span class="added">
-                            ➕
-                        </span>
-
-                        <span>
-                            ${escapeHtml(
-                                crew.role
-                            )}
-                        </span>
-
-                        <span class="added">
-
-                            ${escapeHtml(
-                                crew.name
-                            )}
-
-                        </span>
-
-                    </div>
-
-                `;
-
-            }
-        );
-
-
-        html += `
-
-            </div>
-
-        `;
-
-    }
-
-
-    resultBox.innerHTML =
-        html;
-
-}
-
-
-// =========================================================
-// FIND SOURCE FOR ONE CREW MEMBER
-// =========================================================
-
-function findSourceForCrew(
-    currentFlight,
-    crew
-) {
-
-    const currentTime =
-        getFlightDateTime(
-            currentFlight
-        );
-
-
-    const currentDep =
-        normalizeAirport(
-            currentFlight.dep
-        );
-
-
-    const personName =
-        normalizeName(
-            crew.name
-        );
-
-
-    const candidates = [];
-
-
-    flights.forEach(
-        flight => {
-
-            if (
-                flight === currentFlight
-            ) {
-
-                return;
-
-            }
-
-
-            if (
-                !flight.crew ||
-                !flight.crew.length
-            ) {
-
-                return;
-
-            }
-
-
-            // ------------------------------------------------
-            // ARR của chuyến trước phải bằng DEP hiện tại
-            // ------------------------------------------------
-
-            const arrivalAirport =
-                normalizeAirport(
-                    flight.arr
-                );
-
-
-            if (
-                !currentDep ||
-                arrivalAirport !== currentDep
-            ) {
-
-                return;
-
-            }
-
-
-            // ------------------------------------------------
-            // Phải xảy ra trước
-            // ------------------------------------------------
-
-            const previousTime =
-                getFlightDateTime(
-                    flight
-                );
-
-
-            if (
-                !isFinite(
-                    currentTime
-                ) ||
-                !isFinite(
-                    previousTime
-                )
-            ) {
-
-                return;
-
-            }
-
-
-            if (
-                previousTime >= currentTime
-            ) {
-
-                return;
-
-            }
-
-
-            // ------------------------------------------------
-            // Phải có người đó
-            // ------------------------------------------------
-
-            const found =
-                flight.crew.some(
-                    member =>
-                        normalizeName(
-                            member.name
-                        ) === personName
-                );
-
-
-            if (!found) {
-
-                return;
-
-            }
-
-
-            candidates.push({
-
-                flight:
-                    flight,
-
-                difference:
-                    currentTime -
-                    previousTime
-
-            });
-
-        }
-    );
-
-
-    candidates.sort(
-        (a, b) =>
-            a.difference -
-            b.difference
-    );
-
-
-    if (
-        candidates.length
-    ) {
-
-        return candidates[0].flight;
-
-    }
-
-
-    return null;
-
-}
-
-
-// =========================================================
-// GET SOURCE FOR EVERY CREW MEMBER
-// =========================================================
-
-function getCrewSources(
-    flight
-) {
-
-    return flight.crew.map(
-        crew => {
-
-            return {
-
-                crew:
-
-                    crew,
-
-                source:
-
-                    findSourceForCrew(
-                        flight,
-                        crew
-                    )
-
-            };
-
-        }
-    );
 
 }
 
@@ -2572,12 +2379,12 @@ function showCrewSource(
 ) {
 
     const flight =
-    findFlight(
-        flightNumber,
-        {
-            fromHAN: true
-        }
-    );
+        findFlight(
+            flightNumber,
+            {
+                fromHAN: true
+            }
+        );
 
 
     if (!flight) {
@@ -2585,9 +2392,7 @@ function showCrewSource(
         showError(
 
             "Không tìm thấy chuyến bay <b>VJ" +
-            escapeHtml(
-                flightNumber
-            ) +
+            escapeHtml(flightNumber) +
             "</b>."
 
         );
@@ -2598,15 +2403,14 @@ function showCrewSource(
 
 
     if (
+        !flight.crew ||
         !flight.crew.length
     ) {
 
         showError(
 
             "VJ" +
-            escapeHtml(
-                flightNumber
-            ) +
+            escapeHtml(flightNumber) +
             " không có dữ liệu tổ bay."
 
         );
@@ -2617,9 +2421,7 @@ function showCrewSource(
 
 
     const sources =
-        getCrewSources(
-            flight
-        );
+        getCrewSources(flight);
 
 
     renderCrewSourceResult(
@@ -2631,7 +2433,7 @@ function showCrewSource(
 
 
 // =========================================================
-// RENDER SOURCE RESULT
+// RENDER CREW SOURCE
 // =========================================================
 
 function renderCrewSourceResult(
@@ -2648,9 +2450,10 @@ function renderCrewSourceResult(
 
             const key =
                 item.source
-                    ? normalizeFlightNumber(
-                        item.source.flight
-                    )
+
+                    ? "VJ" +
+                      item.source.flight
+
                     : "HN";
 
 
@@ -2661,12 +2464,11 @@ function renderCrewSourceResult(
                 groups.set(
                     key,
                     {
-
                         source:
                             item.source,
 
-                        members: []
-
+                        members:
+                            []
                     }
                 );
 
@@ -2676,125 +2478,66 @@ function renderCrewSourceResult(
             groups
                 .get(key)
                 .members
-                .push(
-                    item.crew
-                );
+                .push(item.crew);
 
         }
     );
 
 
     // -----------------------------------------------------
-    // HN FIRST
+    // SUMMARY
     // -----------------------------------------------------
-
-    const sorted =
-        Array.from(
-            groups.values()
-        )
-        .sort(
-            (a, b) => {
-
-                if (
-                    !a.source &&
-                    b.source
-                ) {
-
-                    return -1;
-
-                }
-
-
-                if (
-                    a.source &&
-                    !b.source
-                ) {
-
-                    return 1;
-
-                }
-
-
-                if (
-                    !a.source &&
-                    !b.source
-                ) {
-
-                    return 0;
-
-                }
-
-
-                return (
-                    getFlightDateTime(
-                        a.source
-                    ) -
-                    getFlightDateTime(
-                        b.source
-                    )
-                );
-
-            }
-        );
-
 
     let summary = "";
 
 
-    sorted.forEach(
-        group => {
+    groups.forEach(
+        (
+            group,
+            key
+        ) => {
 
-            const sourceName =
-                group.source
-                    ? "VJ" +
-                      group.source.flight
-                    : "HN";
+            const count =
+                group.members.length;
 
 
-            const roles =
-                group.members
-                    .map(
-                        crew =>
-                            crew.role ||
-                            "CREW"
-                    )
-                    .join(", ");
+            const isHN =
+                key === "HN";
 
 
             summary += `
 
-                <div
+                <span
                     style="
-                        display:flex;
+                        display:inline-flex;
                         align-items:center;
-                        gap:15px;
-                        padding:10px 0;
-                        border-bottom:1px solid #e2e8f0;
+                        gap:6px;
+                        margin-right:8px;
+                        margin-bottom:6px;
+                        padding:6px 10px;
+                        border-radius:6px;
+                        background:${
+                            isHN
+                                ? "#e2e8f0"
+                                : "#dbeafe"
+                        };
+                        color:${
+                            isHN
+                                ? "#475569"
+                                : "#0f4c81"
+                        };
+                        font-size:12px;
+                        font-weight:800;
                     "
                 >
 
-                    <strong
-                        style="
-                            min-width:70px;
-                            color:#0f4c81;
-                        "
-                    >
-
-                        ${escapeHtml(
-                            sourceName
-                        )}
-
-                    </strong>
+                    ${escapeHtml(key)}
 
                     <span>
-
-                        ${escapeHtml(
-                            roles
-                        )}
-
+                        ${count} người
                     </span>
 
-                </div>
+                </span>
 
             `;
 
@@ -2802,24 +2545,34 @@ function renderCrewSourceResult(
     );
 
 
+    // -----------------------------------------------------
+    // CREW
+    // -----------------------------------------------------
+
     let detail = "";
 
 
     sources.forEach(
         item => {
 
-            const sourceName =
+            const source =
                 item.source
+
                     ? "VJ" +
                       item.source.flight
+
                     : "HN";
 
 
             detail += `
 
-                <div class="crew-member">
+                <div
+                    class="crew-member"
+                >
 
-                    <div class="crew-role">
+                    <div
+                        class="crew-role"
+                    >
 
                         ${escapeHtml(
                             item.crew.role
@@ -2827,7 +2580,10 @@ function renderCrewSourceResult(
 
                     </div>
 
-                    <div class="crew-name">
+
+                    <div
+                        class="crew-name"
+                    >
 
                         ${escapeHtml(
                             item.crew.name
@@ -2835,21 +2591,24 @@ function renderCrewSourceResult(
 
                     </div>
 
+
                     <div
                         style="
                             margin-left:auto;
+                            min-width:70px;
+                            text-align:right;
                             font-size:12px;
                             font-weight:800;
                             color:${
-                                item.source
-                                    ? "#0f4c81"
-                                    : "#64748b"
+                                source === "HN"
+                                    ? "#64748b"
+                                    : "#e21b23"
                             };
                         "
                     >
 
                         ← ${escapeHtml(
-                            sourceName
+                            source
                         )}
 
                     </div>
@@ -2872,11 +2631,12 @@ function renderCrewSourceResult(
 
                     <div class="result-title">
 
-                        VJ${escapeHtml(
+                        TỔ BAY VJ${escapeHtml(
                             flight.flight
                         )}
 
                     </div>
+
 
                     <div class="result-subtitle">
 
@@ -2899,7 +2659,7 @@ function renderCrewSourceResult(
 
             <div
                 style="
-                    padding:20px;
+                    padding:16px 20px;
                     background:#f8fafc;
                     border-bottom:1px solid #dbe3ec;
                 "
@@ -2907,15 +2667,15 @@ function renderCrewSourceResult(
 
                 <div
                     style="
-                        font-size:12px;
+                        font-size:11px;
                         color:#64748b;
                         font-weight:800;
-                        letter-spacing:1px;
-                        margin-bottom:10px;
+                        margin-bottom:9px;
+                        letter-spacing:.8px;
                     "
                 >
 
-                    TỔ BAY ĐẾN TỪ
+                    NGUỒN TỔ BAY
 
                 </div>
 
@@ -2939,71 +2699,383 @@ function renderCrewSourceResult(
 
 
 // =========================================================
-// RENDER CREW LIST
+// SHOW CHANGED DEPARTURE ONLY
+// =========================================================
+//
+// Khi <= 50%:
+//
+// Chỉ hiển thị tổ bay đi.
+//
+// Không hiển thị người dư của tổ bay đến.
+//
 // =========================================================
 
-function renderCrewList(
-    crewList,
-    changedCrew
+function showChangedDepartureOnly(
+    fromFlight,
+    toFlight,
+    notKeptCrew
 ) {
 
-    const changedNames =
-        new Set(
-            changedCrew.map(
-                crew =>
-                    normalizeName(
-                        crew.name
-                    )
-            )
+    const crewSources =
+        getCrewSources(
+            fromFlight
         );
 
 
-    return crewList
-        .map(
-            crew => {
+    // =====================================================
+    // CREW LIST
+    // =====================================================
 
-                const isChanged =
-                    changedNames.has(
-                        normalizeName(
-                            crew.name
-                        )
-                    );
+    let crewHtml = "";
 
 
-                return `
+    crewSources.forEach(
+        item => {
+
+            const source =
+                item.source
+
+                    ? "VJ" +
+                      item.source.flight
+
+                    : "HN";
+
+
+            crewHtml += `
+
+                <div
+                    class="crew-member"
+                >
+
+                    <div class="crew-role">
+
+                        ${escapeHtml(
+                            item.crew.role
+                        )}
+
+                    </div>
+
+
+                    <div class="crew-name">
+
+                        ${escapeHtml(
+                            item.crew.name
+                        )}
+
+                    </div>
+
 
                     <div
-                        class="crew-member"
-                        style="${
-                            isChanged
-                                ? "background:#fff7ed;"
-                                : ""
-                        }"
+                        style="
+                            margin-left:auto;
+                            min-width:70px;
+                            text-align:right;
+                            font-size:12px;
+                            font-weight:800;
+                            color:${
+                                source === "HN"
+                                    ? "#64748b"
+                                    : "#e21b23"
+                            };
+                        "
                     >
 
-                        <div class="crew-role">
+                        ← ${escapeHtml(
+                            source
+                        )}
+
+                    </div>
+
+                </div>
+
+            `;
+
+        }
+    );
+
+
+    // =====================================================
+    // SOURCE SUMMARY
+    // =====================================================
+
+    const sourceGroups =
+        new Map();
+
+
+    crewSources.forEach(
+        item => {
+
+            const source =
+                item.source
+
+                    ? "VJ" +
+                      item.source.flight
+
+                    : "HN";
+
+
+            if (
+                !sourceGroups.has(source)
+            ) {
+
+                sourceGroups.set(
+                    source,
+                    0
+                );
+
+            }
+
+
+            sourceGroups.set(
+                source,
+                sourceGroups.get(source) + 1
+            );
+
+        }
+    );
+
+
+    let sourceSummary = "";
+
+
+    sourceGroups.forEach(
+        (
+            count,
+            source
+        ) => {
+
+            const isHN =
+                source === "HN";
+
+
+            sourceSummary += `
+
+                <span
+                    style="
+                        display:inline-flex;
+                        align-items:center;
+                        gap:6px;
+                        margin-right:8px;
+                        margin-bottom:6px;
+                        padding:6px 10px;
+                        border-radius:6px;
+                        background:${
+                            isHN
+                                ? "#e2e8f0"
+                                : "#dbeafe"
+                        };
+                        color:${
+                            isHN
+                                ? "#475569"
+                                : "#0f4c81"
+                        };
+                        font-size:12px;
+                        font-weight:800;
+                    "
+                >
+
+                    ${escapeHtml(source)}
+
+                    <span>
+                        ${count} người
+                    </span>
+
+                </span>
+
+            `;
+
+        }
+    );
+
+
+    // =====================================================
+    // RESULT HEADER
+    // =====================================================
+
+    let html = `
+
+        <div class="change-result">
+
+            <div class="change-icon">
+                !
+            </div>
+
+
+            <div class="change-title">
+                CÓ ĐỔI TỔ
+            </div>
+
+
+            <div class="change-detail">
+
+                Cặp chuyến:
+
+                <b>
+                    VJ${escapeHtml(
+                        fromFlight.flight
+                    )}
+                </b>
+
+                →
+
+                <b>
+                    VJ${escapeHtml(
+                        toFlight.flight
+                    )}
+                </b>
+
+            </div>
+
+        </div>
+
+
+        <div class="result-card">
+
+            <div class="result-header">
+
+                <div>
+
+                    <div class="result-title">
+
+                        TỔ BAY VJ${escapeHtml(
+                            fromFlight.flight
+                        )}
+
+                    </div>
+
+
+                    <div class="result-subtitle">
+
+                        ${escapeHtml(
+                            fromFlight.dep
+                        )}
+
+                        →
+
+                        ${escapeHtml(
+                            fromFlight.arr
+                        )}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div
+                style="
+                    padding:14px 16px;
+                    background:#f8fafc;
+                    border-bottom:1px solid #dbe3ec;
+                "
+            >
+
+                <div
+                    style="
+                        font-size:11px;
+                        color:#64748b;
+                        font-weight:800;
+                        letter-spacing:.8px;
+                        margin-bottom:9px;
+                    "
+                >
+
+                    NGUỒN TỔ BAY
+
+                </div>
+
+
+                ${sourceSummary}
+
+            </div>
+
+
+            <div class="crew-list">
+
+                ${crewHtml}
+
+            </div>
+
+        </div>
+
+    `;
+
+
+    // =====================================================
+    // CHỈ HIỆN NGƯỜI TỔ BAY ĐI KHÔNG CÒN Ở TỔ ĐẾN
+    // =====================================================
+
+    if (
+        notKeptCrew &&
+        notKeptCrew.length
+    ) {
+
+        html += `
+
+            <div class="difference">
+
+                <div class="difference-title">
+
+                    THÀNH VIÊN TỔ BAY ĐI
+                    KHÔNG CÒN Ở
+                    VJ${escapeHtml(
+                        toFlight.flight
+                    )}
+
+                </div>
+
+        `;
+
+
+        notKeptCrew.forEach(
+            crew => {
+
+                html += `
+
+                    <div class="difference-row">
+
+                        <span class="removed">
+                            ❌
+                        </span>
+
+
+                        <span>
 
                             ${escapeHtml(
                                 crew.role
                             )}
 
-                        </div>
+                        </span>
 
-                        <div class="crew-name">
+
+                        <span class="removed">
 
                             ${escapeHtml(
                                 crew.name
                             )}
 
-                        </div>
+                        </span>
 
                     </div>
 
                 `;
 
             }
-        )
-        .join("");
+        );
+
+
+        html += `
+
+            </div>
+
+        `;
+
+    }
+
+
+    resultBox.innerHTML =
+        html;
 
 }
 
@@ -3012,9 +3084,7 @@ function renderCrewList(
 // ERROR
 // =========================================================
 
-function showError(
-    message
-) {
+function showError(message) {
 
     resultBox.innerHTML = `
 
@@ -3033,9 +3103,7 @@ function showError(
 // COLUMN LETTER
 // =========================================================
 
-function columnLetter(
-    index
-) {
+function columnLetter(index) {
 
     if (
         index < 0
@@ -3047,7 +3115,9 @@ function columnLetter(
 
 
     let result = "";
-    let number = index + 1;
+
+    let number =
+        index + 1;
 
 
     while (
@@ -3055,7 +3125,9 @@ function columnLetter(
     ) {
 
         const remainder =
-            (number - 1) % 26;
+            (
+                number - 1
+            ) % 26;
 
 
         result =
@@ -3067,7 +3139,9 @@ function columnLetter(
 
         number =
             Math.floor(
-                (number - 1) / 26
+                (
+                    number - 1
+                ) / 26
             );
 
     }
@@ -3082,9 +3156,7 @@ function columnLetter(
 // ESCAPE HTML
 // =========================================================
 
-function escapeHtml(
-    text
-) {
+function escapeHtml(text) {
 
     return String(
         text ?? ""
@@ -3111,3 +3183,119 @@ function escapeHtml(
     );
 
 }
+
+
+// =========================================================
+// ENTER KEY
+// =========================================================
+
+if (
+    departureInput
+) {
+
+    departureInput.addEventListener(
+        "keydown",
+        function (event) {
+
+            if (
+                event.key === "Enter"
+            ) {
+
+                event.preventDefault();
+
+
+                if (
+                    arrivalInput
+                ) {
+
+                    arrivalInput.focus();
+
+                }
+
+            }
+
+        }
+    );
+
+}
+
+
+if (
+    arrivalInput
+) {
+
+    arrivalInput.addEventListener(
+        "keydown",
+        function (event) {
+
+            if (
+                event.key === "Enter"
+            ) {
+
+                event.preventDefault();
+
+                checkCrew();
+
+            }
+
+        }
+    );
+
+}
+
+
+// =========================================================
+// CHECK BUTTON
+// =========================================================
+
+if (
+    checkBtn
+) {
+
+    checkBtn.addEventListener(
+        "click",
+        checkCrew
+    );
+
+}
+
+
+// =========================================================
+// ONLY NUMBER INPUT
+// =========================================================
+
+function onlyNumberInput(input) {
+
+    if (!input) {
+        return;
+    }
+
+
+    input.addEventListener(
+        "input",
+        function () {
+
+            this.value =
+                this.value.replace(
+                    /[^0-9]/g,
+                    ""
+                );
+
+        }
+    );
+
+}
+
+
+onlyNumberInput(
+    departureInput
+);
+
+onlyNumberInput(
+    arrivalInput
+);
+
+
+// =========================================================
+// END
+// =========================================================
