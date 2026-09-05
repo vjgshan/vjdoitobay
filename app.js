@@ -1,3 +1,7 @@
+// =========================================================
+// CREW LIST - CREW PAIRING CHECK
+// =========================================================
+
 let flights = [];
 
 
@@ -27,7 +31,17 @@ const resultBox =
     document.getElementById("result");
 
 
+// =========================================================
+// HAN PAIR BUTTON
+// =========================================================
 
+const hanPairBtn =
+    document.getElementById("hanPairBtn");
+
+
+// =========================================================
+// LOAD EXCEL
+// =========================================================
 
 if (excelFile) {
 
@@ -112,6 +126,9 @@ if (excelFile) {
 }
 
 
+// =========================================================
+// NORMALIZE HEADER
+// =========================================================
 
 function normalizeHeader(value) {
 
@@ -120,13 +137,21 @@ function normalizeHeader(value) {
     )
     .trim()
     .toUpperCase()
-    .replace(/\s+/g, " ")
-    .replace(/\n/g, " ");
+    .replace(
+        /\s+/g,
+        " "
+    )
+    .replace(
+        /\n/g,
+        " "
+    );
 
 }
 
 
-
+// =========================================================
+// FIND COLUMN
+// =========================================================
 
 function findColumn(
     header,
@@ -173,9 +198,13 @@ function findColumn(
 }
 
 
+// =========================================================
+// FIND CREW COLUMN
+// =========================================================
 
-
-function findCrewColumn(header) {
+function findCrewColumn(
+    header
+) {
 
     return findColumn(
         header,
@@ -195,9 +224,13 @@ function findCrewColumn(header) {
 }
 
 
+// =========================================================
+// FIND CREW COUNT COLUMN
+// =========================================================
 
-
-function findCrewCountColumn(header) {
+function findCrewCountColumn(
+    header
+) {
 
     return findColumn(
         header,
@@ -219,11 +252,20 @@ function findCrewCountColumn(header) {
 }
 
 
-function findHeaderRow(rows) {
+// =========================================================
+// FIND HEADER ROW
+// =========================================================
+
+function findHeaderRow(
+    rows
+) {
 
     for (
         let i = 0;
-        i < Math.min(rows.length, 40);
+        i < Math.min(
+            rows.length,
+            40
+        );
         i++
     ) {
 
@@ -231,8 +273,11 @@ function findHeaderRow(rows) {
             rows[i] || [];
 
 
-        let hasFlight = false;
-        let hasCrew = false;
+        let hasFlight =
+            false;
+
+        let hasCrew =
+            false;
 
 
         for (
@@ -240,7 +285,9 @@ function findHeaderRow(rows) {
         ) {
 
             const value =
-                normalizeHeader(cell);
+                normalizeHeader(
+                    cell
+                );
 
 
             if (
@@ -287,14 +334,21 @@ function findHeaderRow(rows) {
 }
 
 
+// =========================================================
+// PARSE CREW LIST
+// =========================================================
 
-function parseCrewList(rows) {
+function parseCrewList(
+    rows
+) {
 
     flights = [];
 
 
     const headerRow =
-        findHeaderRow(rows);
+        findHeaderRow(
+            rows
+        );
 
 
     if (
@@ -310,7 +364,9 @@ function parseCrewList(rows) {
 
 
     const header =
-        rows[headerRow];
+        rows[
+            headerRow
+        ];
 
 
     // -----------------------------------------------------
@@ -330,11 +386,15 @@ function parseCrewList(rows) {
 
 
     const crewCol =
-        findCrewColumn(header);
+        findCrewColumn(
+            header
+        );
 
 
     const crewCountCol =
-        findCrewCountColumn(header);
+        findCrewCountColumn(
+            header
+        );
 
 
     const dateCol =
@@ -350,7 +410,9 @@ function parseCrewList(rows) {
     const typeCol =
         findColumn(
             header,
-            ["TYPE"]
+            [
+                "TYPE"
+            ]
         );
 
 
@@ -398,28 +460,36 @@ function parseCrewList(rows) {
     const stdCol =
         findColumn(
             header,
-            ["STD"]
+            [
+                "STD"
+            ]
         );
 
 
     const staCol =
         findColumn(
             header,
-            ["STA"]
+            [
+                "STA"
+            ]
         );
 
 
     const etdCol =
         findColumn(
             header,
-            ["ETD"]
+            [
+                "ETD"
+            ]
         );
 
 
     const etaCol =
         findColumn(
             header,
-            ["ETA"]
+            [
+                "ETA"
+            ]
         );
 
 
@@ -458,30 +528,39 @@ function parseCrewList(rows) {
 
     console.log(
         "FLT:",
-        columnLetter(flightCol)
+        columnLetter(
+            flightCol
+        )
     );
 
     console.log(
         "CREW:",
-        columnLetter(crewCol)
+        columnLetter(
+            crewCol
+        )
     );
 
     console.log(
         "CREW #:",
         crewCountCol >= 0
-            ? columnLetter(crewCountCol)
+            ? columnLetter(
+                crewCountCol
+            )
             : "Không có"
     );
 
 
-
-
-    let currentFlight = null;
+    let currentFlight =
+        null;
 
 
     for (
-        let i = headerRow + 1;
-        i < rows.length;
+        let i =
+            headerRow + 1;
+
+        i <
+            rows.length;
+
         i++
     ) {
 
@@ -489,16 +568,16 @@ function parseCrewList(rows) {
             rows[i] || [];
 
 
-
-        const rawFlight =
-            row[flightCol];
-
-
         const flightText =
             String(
-                rawFlight ?? ""
+                row[flightCol] ??
+                ""
             ).trim();
 
+
+        // -------------------------------------------------
+        // NEW FLIGHT
+        // -------------------------------------------------
 
         if (
             flightText !== ""
@@ -575,7 +654,8 @@ function parseCrewList(rows) {
 
                 crew: [],
 
-                rowIndex: i
+                rowIndex:
+                    i
 
             };
 
@@ -596,13 +676,21 @@ function parseCrewList(rows) {
         }
 
 
+        // -------------------------------------------------
+        // CREW
+        // -------------------------------------------------
+
         const crewValue =
             row[crewCol];
 
 
         if (
-            crewValue === undefined ||
-            crewValue === null ||
+            crewValue ===
+                undefined ||
+
+            crewValue ===
+                null ||
+
             String(
                 crewValue
             ).trim() === ""
@@ -617,7 +705,9 @@ function parseCrewList(rows) {
             String(
                 crewValue
             )
-            .split(/\r?\n/)
+            .split(
+                /\r?\n/
+            )
             .map(
                 x =>
                     x.trim()
@@ -632,7 +722,9 @@ function parseCrewList(rows) {
             member => {
 
                 const crew =
-                    parseCrew(member);
+                    parseCrew(
+                        member
+                    );
 
 
                 if (
@@ -651,6 +743,9 @@ function parseCrewList(rows) {
     }
 
 
+    // -----------------------------------------------------
+    // REMOVE DUPLICATE CREW
+    // -----------------------------------------------------
 
     flights.forEach(
         flight => {
@@ -679,7 +774,10 @@ function parseCrewList(rows) {
                         }
 
 
-                        seen.add(key);
+                        seen.add(
+                            key
+                        );
+
 
                         return true;
 
@@ -690,9 +788,12 @@ function parseCrewList(rows) {
     );
 
 
+    // -----------------------------------------------------
+    // TOTAL CREW
+    // -----------------------------------------------------
 
-
-    let totalCrew = 0;
+    let totalCrew =
+        0;
 
 
     flights.forEach(
@@ -727,38 +828,43 @@ function parseCrewList(rows) {
         ) +
 
         " | FLT: cột " +
-        columnLetter(flightCol) +
+        columnLetter(
+            flightCol
+        ) +
 
         " | CREW: cột " +
-        columnLetter(crewCol) +
+        columnLetter(
+            crewCol
+        ) +
 
         (
             crewCountCol >= 0
+
                 ? " | CREW #: cột " +
-                  columnLetter(crewCountCol)
+                  columnLetter(
+                      crewCountCol
+                  )
+
                 : ""
         ) +
 
         "</small>";
 
-
-    console.log(
-        "FLIGHTS:",
-        flights
-    );
-
 }
 
 
+// =========================================================
+// NORMALIZE FLIGHT NUMBER
+// =========================================================
 
-function normalizeFlightNumber(value) {
+function normalizeFlightNumber(
+    value
+) {
 
     let text =
         String(
             value ?? ""
-        )
-        .trim()
-        .toUpperCase();
+        ).trim().toUpperCase();
 
 
     text =
@@ -776,7 +882,9 @@ function normalizeFlightNumber(value) {
 
 
     if (
-        /^\d+\.0$/.test(text)
+        /^\d+\.0$/.test(
+            text
+        )
     ) {
 
         text =
@@ -793,9 +901,13 @@ function normalizeFlightNumber(value) {
 }
 
 
+// =========================================================
+// NORMALIZE AIRPORT
+// =========================================================
 
-
-function normalizeAirport(value) {
+function normalizeAirport(
+    value
+) {
 
     return String(
         value ?? ""
@@ -806,9 +918,13 @@ function normalizeAirport(value) {
 }
 
 
+// =========================================================
+// NORMALIZE NAME
+// =========================================================
 
-
-function normalizeName(value) {
+function normalizeName(
+    value
+) {
 
     return String(
         value ?? ""
@@ -823,9 +939,13 @@ function normalizeName(value) {
 }
 
 
+// =========================================================
+// PARSE CREW
+// =========================================================
 
-
-function parseCrew(text) {
+function parseCrew(
+    text
+) {
 
     let value =
         String(
@@ -833,10 +953,9 @@ function parseCrew(text) {
         ).trim();
 
 
-    let role = "";
+    let role =
+        "";
 
-
-    
 
     const matches =
         value.match(
@@ -844,9 +963,12 @@ function parseCrew(text) {
         );
 
 
-    if (matches) {
+    if (
+        matches
+    ) {
 
-        const roles = [];
+        const roles =
+            [];
 
 
         matches.forEach(
@@ -867,7 +989,9 @@ function parseCrew(text) {
 
                 inside =
                     inside
-                    .split(",")
+                    .split(
+                        ","
+                    )
                     .map(
                         x =>
                             x.trim()
@@ -883,7 +1007,9 @@ function parseCrew(text) {
                     );
 
 
-                if (inside) {
+                if (
+                    inside
+                ) {
 
                     roles.push(
                         inside
@@ -903,8 +1029,6 @@ function parseCrew(text) {
     }
 
 
-
-
     value =
         value.replace(
             /\(.*?\)/g,
@@ -912,15 +1036,11 @@ function parseCrew(text) {
         );
 
 
-   
-
     value =
         value.replace(
             /^\s*-\s*/,
             ""
         );
-
-
 
 
     value =
@@ -947,7 +1067,9 @@ function parseCrew(text) {
 }
 
 
-
+// =========================================================
+// FIND FLIGHT
+// =========================================================
 
 function findFlight(
     number,
@@ -980,8 +1102,6 @@ function findFlight(
     }
 
 
-  
-
     if (
         options.fromHAN === true
     ) {
@@ -997,14 +1117,15 @@ function findFlight(
             );
 
 
-        if (hanFlight) {
+        if (
+            hanFlight
+        ) {
 
             return hanFlight;
 
         }
 
     }
-
 
 
     if (
@@ -1016,14 +1137,18 @@ function findFlight(
     }
 
 
-
-
     return candidates[0];
 
 }
 
 
-function parseDate(value) {
+// =========================================================
+// PARSE DATE
+// =========================================================
+
+function parseDate(
+    value
+) {
 
     if (
         value instanceof Date
@@ -1046,7 +1171,8 @@ function parseDate(value) {
 
 
     if (
-        typeof value === "number"
+        typeof value ===
+        "number"
     ) {
 
         const epoch =
@@ -1089,10 +1215,17 @@ function parseDate(value) {
         ).trim();
 
 
-    if (!text) {
+    if (
+        !text
+    ) {
+
         return null;
+
     }
 
+
+    // DD/MM/YYYY
+    // DD-MM-YYYY
 
     let match =
         text.match(
@@ -1100,16 +1233,24 @@ function parseDate(value) {
         );
 
 
-    if (match) {
+    if (
+        match
+    ) {
 
         let day =
-            Number(match[1]);
+            Number(
+                match[1]
+            );
 
         let month =
-            Number(match[2]);
+            Number(
+                match[2]
+            );
 
         let year =
-            Number(match[3]);
+            Number(
+                match[3]
+            );
 
 
         if (
@@ -1132,24 +1273,35 @@ function parseDate(value) {
     }
 
 
+    // YYYY/MM/DD
+    // YYYY-MM-DD
+
     match =
         text.match(
             /^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/
         );
 
 
-    if (match) {
+    if (
+        match
+    ) {
 
         return {
 
             year:
-                Number(match[1]),
+                Number(
+                    match[1]
+                ),
 
             month:
-                Number(match[2]),
+                Number(
+                    match[2]
+                ),
 
             day:
-                Number(match[3])
+                Number(
+                    match[3]
+                )
 
         };
 
@@ -1157,7 +1309,9 @@ function parseDate(value) {
 
 
     const parsed =
-        new Date(text);
+        new Date(
+            text
+        );
 
 
     if (
@@ -1187,8 +1341,13 @@ function parseDate(value) {
 }
 
 
+// =========================================================
+// PARSE TIME
+// =========================================================
 
-function parseTime(value) {
+function parseTime(
+    value
+) {
 
     if (
         value instanceof Date
@@ -1208,10 +1367,14 @@ function parseTime(value) {
 
 
     if (
-        typeof value === "number"
+        typeof value ===
+        "number"
     ) {
 
-        // Excel time
+        // -------------------------------------------------
+        // EXCEL TIME
+        // -------------------------------------------------
+
         if (
             value >= 0 &&
             value < 1
@@ -1219,7 +1382,8 @@ function parseTime(value) {
 
             const minutes =
                 Math.round(
-                    value * 1440
+                    value *
+                    1440
                 );
 
 
@@ -1238,9 +1402,14 @@ function parseTime(value) {
         }
 
 
+        // -------------------------------------------------
         // HHMM
+        // -------------------------------------------------
+
         const number =
-            Math.floor(value);
+            Math.floor(
+                value
+            );
 
 
         const hour =
@@ -1276,10 +1445,16 @@ function parseTime(value) {
         ).trim();
 
 
-    if (!text) {
+    if (
+        !text
+    ) {
+
         return null;
+
     }
 
+
+    // HH:MM
 
     let match =
         text.match(
@@ -1287,20 +1462,28 @@ function parseTime(value) {
         );
 
 
-    if (match) {
+    if (
+        match
+    ) {
 
         return {
 
             hour:
-                Number(match[1]),
+                Number(
+                    match[1]
+                ),
 
             minute:
-                Number(match[2])
+                Number(
+                    match[2]
+                )
 
         };
 
     }
 
+
+    // HHMM
 
     match =
         text.match(
@@ -1308,10 +1491,14 @@ function parseTime(value) {
         );
 
 
-    if (match) {
+    if (
+        match
+    ) {
 
         const number =
-            Number(match[1]);
+            Number(
+                match[1]
+            );
 
 
         const hour =
@@ -1346,12 +1533,20 @@ function parseTime(value) {
 }
 
 
+// =========================================================
+// GET FLIGHT DATE + TIME
+// =========================================================
 
+function getFlightDateTime(
+    flight
+) {
 
-function getFlightDateTime(flight) {
+    if (
+        !flight
+    ) {
 
-    if (!flight) {
         return NaN;
+
     }
 
 
@@ -1396,12 +1591,17 @@ function getFlightDateTime(flight) {
     return new Date(
 
         date.year,
+
         date.month - 1,
+
         date.day,
 
         parsedTime.hour,
+
         parsedTime.minute,
+
         0,
+
         0
 
     ).getTime();
@@ -1409,7 +1609,85 @@ function getFlightDateTime(flight) {
 }
 
 
+// =========================================================
+// GET SPECIFIC FLIGHT DATETIME
+// =========================================================
 
+function getFlightDateTimeByField(
+    flight,
+    field
+) {
+
+    if (
+        !flight
+    ) {
+
+        return NaN;
+
+    }
+
+
+    let time =
+        flight[field];
+
+
+    if (
+        time === "" ||
+        time === null ||
+        time === undefined
+    ) {
+
+        return NaN;
+
+    }
+
+
+    const date =
+        parseDate(
+            flight.date
+        );
+
+
+    const parsedTime =
+        parseTime(
+            time
+        );
+
+
+    if (
+        !date ||
+        !parsedTime
+    ) {
+
+        return NaN;
+
+    }
+
+
+    return new Date(
+
+        date.year,
+
+        date.month - 1,
+
+        date.day,
+
+        parsedTime.hour,
+
+        parsedTime.minute,
+
+        0,
+
+        0
+
+    ).getTime();
+
+}
+
+
+// =========================================================
+// FIND CREW SOURCE
+// =========================================================
 
 function findSourceForCrew(
     currentFlight,
@@ -1434,13 +1712,12 @@ function findSourceForCrew(
         );
 
 
-    const candidates = [];
+    const candidates =
+        [];
 
 
     flights.forEach(
         flight => {
-
-          
 
             if (
                 flight ===
@@ -1462,8 +1739,6 @@ function findSourceForCrew(
             }
 
 
-         
-
             const previousArr =
                 normalizeAirport(
                     flight.arr
@@ -1480,8 +1755,6 @@ function findSourceForCrew(
             }
 
 
-           
-
             const previousTime =
                 getFlightDateTime(
                     flight
@@ -1489,8 +1762,12 @@ function findSourceForCrew(
 
 
             if (
-                !isFinite(currentTime) ||
-                !isFinite(previousTime)
+                !isFinite(
+                    currentTime
+                ) ||
+                !isFinite(
+                    previousTime
+                )
             ) {
 
                 return;
@@ -1508,8 +1785,6 @@ function findSourceForCrew(
             }
 
 
-            
-
             const found =
                 flight.crew.some(
                     member =>
@@ -1521,8 +1796,12 @@ function findSourceForCrew(
                 );
 
 
-            if (!found) {
+            if (
+                !found
+            ) {
+
                 return;
+
             }
 
 
@@ -1541,10 +1820,11 @@ function findSourceForCrew(
     );
 
 
-    
-
     candidates.sort(
-        (a, b) =>
+        (
+            a,
+            b
+        ) =>
             a.difference -
             b.difference
     );
@@ -1564,9 +1844,23 @@ function findSourceForCrew(
 }
 
 
+// =========================================================
+// GET CREW SOURCES
+// =========================================================
 
+function getCrewSources(
+    flight
+) {
 
-function getCrewSources(flight) {
+    if (
+        !flight ||
+        !flight.crew
+    ) {
+
+        return [];
+
+    }
+
 
     return flight.crew.map(
         crew => ({
@@ -1586,7 +1880,9 @@ function getCrewSources(flight) {
 }
 
 
-
+// =========================================================
+// CHECK CREW
+// =========================================================
 
 function checkCrew() {
 
@@ -1606,7 +1902,9 @@ function checkCrew() {
         );
 
 
-    
+    // -----------------------------------------------------
+    // ONLY DEPARTURE
+    // -----------------------------------------------------
 
     if (
         fromNumber &&
@@ -1622,7 +1920,9 @@ function checkCrew() {
     }
 
 
-  
+    // -----------------------------------------------------
+    // BOTH
+    // -----------------------------------------------------
 
     if (
         fromNumber &&
@@ -1639,7 +1939,9 @@ function checkCrew() {
     }
 
 
-   
+    // -----------------------------------------------------
+    // ONLY ARRIVAL
+    // -----------------------------------------------------
 
     if (
         !fromNumber &&
@@ -1662,13 +1964,14 @@ function checkCrew() {
 }
 
 
+// =========================================================
+// COMPARE CREW PAIR
+// =========================================================
 
 function comparePair(
     fromNumber,
     toNumber
 ) {
-
-  
 
     const fromFlight =
         findFlight(
@@ -1679,20 +1982,22 @@ function comparePair(
         );
 
 
-    
-
     const toFlight =
         findFlight(
             toNumber
         );
 
 
-    if (!fromFlight) {
+    if (
+        !fromFlight
+    ) {
 
         showError(
 
             "Không tìm thấy chuyến bay <b>VJ" +
-            escapeHtml(fromNumber) +
+            escapeHtml(
+                fromNumber
+            ) +
             "</b>."
 
         );
@@ -1702,12 +2007,16 @@ function comparePair(
     }
 
 
-    if (!toFlight) {
+    if (
+        !toFlight
+    ) {
 
         showError(
 
             "Không tìm thấy chuyến bay <b>VJ" +
-            escapeHtml(toNumber) +
+            escapeHtml(
+                toNumber
+            ) +
             "</b>."
 
         );
@@ -1716,8 +2025,6 @@ function comparePair(
 
     }
 
-
-    
 
     if (
         !fromFlight.crew ||
@@ -1727,7 +2034,9 @@ function comparePair(
         showError(
 
             "VJ" +
-            escapeHtml(fromNumber) +
+            escapeHtml(
+                fromNumber
+            ) +
             " không có dữ liệu tổ bay."
 
         );
@@ -1745,7 +2054,9 @@ function comparePair(
         showError(
 
             "VJ" +
-            escapeHtml(toNumber) +
+            escapeHtml(
+                toNumber
+            ) +
             " không có dữ liệu tổ bay."
 
         );
@@ -1754,8 +2065,6 @@ function comparePair(
 
     }
 
-
-    
 
     const toSet =
         new Set(
@@ -1770,8 +2079,6 @@ function comparePair(
         );
 
 
-    
-
     const keptCrew =
         fromFlight.crew.filter(
 
@@ -1784,8 +2091,6 @@ function comparePair(
 
         );
 
-
-    
 
     const notKeptCrew =
         fromFlight.crew.filter(
@@ -1858,8 +2163,6 @@ function comparePair(
     );
 
 
-  
-
     if (
         keptPercent > 50
     ) {
@@ -1877,8 +2180,6 @@ function comparePair(
     }
 
 
-    
-
     showChangedDepartureOnly(
         fromFlight,
         toFlight,
@@ -1888,7 +2189,9 @@ function comparePair(
 }
 
 
-
+// =========================================================
+// SHOW NO CHANGE
+// =========================================================
 
 function showNoChangeMajority(
     fromFlight,
@@ -1909,31 +2212,25 @@ function showNoChangeMajority(
             : 0;
 
 
-   
-
     const notKeptSources =
         notKeptCrew.map(
-            crew => {
+            crew => ({
 
-                return {
+                crew:
+                    crew,
 
-                    crew: crew,
+                source:
+                    findSourceForCrew(
+                        fromFlight,
+                        crew
+                    )
 
-                    source:
-                        findSourceForCrew(
-                            fromFlight,
-                            crew
-                        )
-
-                };
-
-            }
+            })
         );
 
 
-   
-
-    let membersHtml = "";
+    let membersHtml =
+        "";
 
 
     notKeptSources.forEach(
@@ -1959,8 +2256,6 @@ function showNoChangeMajority(
                     "
                 >
 
-                    <!-- ROLE -->
-
                     <div
                         style="
                             min-width:42px;
@@ -1977,8 +2272,6 @@ function showNoChangeMajority(
                     </div>
 
 
-                    <!-- NAME -->
-
                     <div
                         style="
                             flex:1;
@@ -1994,8 +2287,6 @@ function showNoChangeMajority(
 
                     </div>
 
-
-                    <!-- SOURCE -->
 
                     <div
                         style="
@@ -2025,9 +2316,8 @@ function showNoChangeMajority(
     );
 
 
-   
-
-    let notKeptHtml = "";
+    let notKeptHtml =
+        "";
 
 
     if (
@@ -2072,7 +2362,6 @@ function showNoChangeMajority(
         `;
 
     }
-
 
 
     resultBox.innerHTML = `
@@ -2144,7 +2433,9 @@ function showNoChangeMajority(
 }
 
 
-
+// =========================================================
+// SHOW CREW SOURCE
+// =========================================================
 
 function showCrewSource(
     flightNumber
@@ -2159,12 +2450,16 @@ function showCrewSource(
         );
 
 
-    if (!flight) {
+    if (
+        !flight
+    ) {
 
         showError(
 
             "Không tìm thấy chuyến bay <b>VJ" +
-            escapeHtml(flightNumber) +
+            escapeHtml(
+                flightNumber
+            ) +
             "</b>."
 
         );
@@ -2182,7 +2477,9 @@ function showCrewSource(
         showError(
 
             "VJ" +
-            escapeHtml(flightNumber) +
+            escapeHtml(
+                flightNumber
+            ) +
             " không có dữ liệu tổ bay."
 
         );
@@ -2193,7 +2490,9 @@ function showCrewSource(
 
 
     const sources =
-        getCrewSources(flight);
+        getCrewSources(
+            flight
+        );
 
 
     renderCrewSourceResult(
@@ -2204,7 +2503,9 @@ function showCrewSource(
 }
 
 
-
+// =========================================================
+// RENDER CREW SOURCE
+// =========================================================
 
 function renderCrewSourceResult(
     flight,
@@ -2228,17 +2529,21 @@ function renderCrewSourceResult(
 
 
             if (
-                !groups.has(key)
+                !groups.has(
+                    key
+                )
             ) {
 
                 groups.set(
                     key,
                     {
+
                         source:
                             item.source,
 
                         members:
                             []
+
                     }
                 );
 
@@ -2246,17 +2551,20 @@ function renderCrewSourceResult(
 
 
             groups
-                .get(key)
+                .get(
+                    key
+                )
                 .members
-                .push(item.crew);
+                .push(
+                    item.crew
+                );
 
         }
     );
 
 
-   
-
-    let summary = "";
+    let summary =
+        "";
 
 
     groups.forEach(
@@ -2299,7 +2607,9 @@ function renderCrewSourceResult(
                     "
                 >
 
-                    ${escapeHtml(key)}
+                    ${escapeHtml(
+                        key
+                    )}
 
                     <span>
                         ${count} người
@@ -2313,9 +2623,8 @@ function renderCrewSourceResult(
     );
 
 
- 
-
-    let detail = "";
+    let detail =
+        "";
 
 
     sources.forEach(
@@ -2464,7 +2773,9 @@ function renderCrewSourceResult(
 }
 
 
-
+// =========================================================
+// SHOW CHANGED DEPARTURE ONLY
+// =========================================================
 
 function showChangedDepartureOnly(
     fromFlight,
@@ -2478,9 +2789,8 @@ function showChangedDepartureOnly(
         );
 
 
-    
-
-    let crewHtml = "";
+    let crewHtml =
+        "";
 
 
     crewSources.forEach(
@@ -2501,7 +2811,9 @@ function showChangedDepartureOnly(
                     class="crew-member"
                 >
 
-                    <div class="crew-role">
+                    <div
+                        class="crew-role"
+                    >
 
                         ${escapeHtml(
                             item.crew.role
@@ -2510,7 +2822,9 @@ function showChangedDepartureOnly(
                     </div>
 
 
-                    <div class="crew-name">
+                    <div
+                        class="crew-name"
+                    >
 
                         ${escapeHtml(
                             item.crew.name
@@ -2548,8 +2862,6 @@ function showChangedDepartureOnly(
     );
 
 
-   
-
     const sourceGroups =
         new Map();
 
@@ -2567,7 +2879,9 @@ function showChangedDepartureOnly(
 
 
             if (
-                !sourceGroups.has(source)
+                !sourceGroups.has(
+                    source
+                )
             ) {
 
                 sourceGroups.set(
@@ -2580,14 +2894,17 @@ function showChangedDepartureOnly(
 
             sourceGroups.set(
                 source,
-                sourceGroups.get(source) + 1
+                sourceGroups.get(
+                    source
+                ) + 1
             );
 
         }
     );
 
 
-    let sourceSummary = "";
+    let sourceSummary =
+        "";
 
 
     sourceGroups.forEach(
@@ -2626,7 +2943,9 @@ function showChangedDepartureOnly(
                     "
                 >
 
-                    ${escapeHtml(source)}
+                    ${escapeHtml(
+                        source
+                    )}
 
                     <span>
                         ${count} người
@@ -2639,8 +2958,6 @@ function showChangedDepartureOnly(
         }
     );
 
-
-    
 
     let html = `
 
@@ -2752,8 +3069,6 @@ function showChangedDepartureOnly(
     `;
 
 
-   
-
     if (
         notKeptCrew &&
         notKeptCrew.length
@@ -2781,9 +3096,13 @@ function showChangedDepartureOnly(
 
                 html += `
 
-                    <div class="difference-row">
+                    <div
+                        class="difference-row"
+                    >
 
-                        <span class="removed">
+                        <span
+                            class="removed"
+                        >
                             ❌
                         </span>
 
@@ -2797,7 +3116,9 @@ function showChangedDepartureOnly(
                         </span>
 
 
-                        <span class="removed">
+                        <span
+                            class="removed"
+                        >
 
                             ${escapeHtml(
                                 crew.name
@@ -2828,9 +3149,13 @@ function showChangedDepartureOnly(
 }
 
 
+// =========================================================
+// ERROR
+// =========================================================
 
-
-function showError(message) {
+function showError(
+    message
+) {
 
     resultBox.innerHTML = `
 
@@ -2849,7 +3174,9 @@ function showError(message) {
 // COLUMN LETTER
 // =========================================================
 
-function columnLetter(index) {
+function columnLetter(
+    index
+) {
 
     if (
         index < 0
@@ -2860,7 +3187,9 @@ function columnLetter(index) {
     }
 
 
-    let result = "";
+    let result =
+        "";
+
 
     let number =
         index + 1;
@@ -2878,7 +3207,8 @@ function columnLetter(index) {
 
         result =
             String.fromCharCode(
-                65 + remainder
+                65 +
+                remainder
             ) +
             result;
 
@@ -2898,8 +3228,13 @@ function columnLetter(index) {
 }
 
 
+// =========================================================
+// ESCAPE HTML
+// =========================================================
 
-function escapeHtml(text) {
+function escapeHtml(
+    text
+) {
 
     return String(
         text ?? ""
@@ -2928,7 +3263,9 @@ function escapeHtml(text) {
 }
 
 
-
+// =========================================================
+// ENTER - DEPARTURE
+// =========================================================
 
 if (
     departureInput
@@ -2939,7 +3276,8 @@ if (
         function (event) {
 
             if (
-                event.key === "Enter"
+                event.key ===
+                "Enter"
             ) {
 
                 event.preventDefault();
@@ -2961,6 +3299,10 @@ if (
 }
 
 
+// =========================================================
+// ENTER - ARRIVAL
+// =========================================================
+
 if (
     arrivalInput
 ) {
@@ -2970,7 +3312,8 @@ if (
         function (event) {
 
             if (
-                event.key === "Enter"
+                event.key ===
+                "Enter"
             ) {
 
                 event.preventDefault();
@@ -2985,6 +3328,9 @@ if (
 }
 
 
+// =========================================================
+// CHECK BUTTON
+// =========================================================
 
 if (
     checkBtn
@@ -2998,12 +3344,20 @@ if (
 }
 
 
+// =========================================================
+// ONLY NUMBER INPUT
+// =========================================================
 
+function onlyNumberInput(
+    input
+) {
 
-function onlyNumberInput(input) {
+    if (
+        !input
+    ) {
 
-    if (!input) {
         return;
+
     }
 
 
@@ -3032,4 +3386,1380 @@ onlyNumberInput(
 );
 
 
+// =========================================================
+// HAN AIRCRAFT PAIR
+// =========================================================
+//
+// =========================================================
 
+function getHANAircraftPairs() {
+
+    // -----------------------------------------------------
+    // ARRIVALS TO HAN
+    // -----------------------------------------------------
+
+    const arrivals =
+        flights.filter(
+            flight => {
+
+                const reg =
+                    String(
+                        flight.reg ??
+                        ""
+                    ).trim();
+
+
+                return (
+
+                    normalizeAirport(
+                        flight.arr
+                    ) === "HAN"
+
+                    &&
+
+                    reg !== ""
+
+                    &&
+
+                    isFinite(
+                        getFlightDateTimeByField(
+                            flight,
+                            "sta"
+                        )
+                    )
+
+                );
+
+            }
+        );
+
+
+    // -----------------------------------------------------
+    // DEPARTURES FROM HAN
+    // -----------------------------------------------------
+
+    const departures =
+        flights.filter(
+            flight => {
+
+                const reg =
+                    String(
+                        flight.reg ??
+                        ""
+                    ).trim();
+
+
+                return (
+
+                    normalizeAirport(
+                        flight.dep
+                    ) === "HAN"
+
+                    &&
+
+                    reg !== ""
+
+                    &&
+
+                    isFinite(
+                        getFlightDateTimeByField(
+                            flight,
+                            "std"
+                        )
+                    )
+
+                );
+
+            }
+        );
+
+
+    // -----------------------------------------------------
+    // SORT ARRIVALS
+    // -----------------------------------------------------
+
+    arrivals.sort(
+        (
+            a,
+            b
+        ) =>
+
+            getFlightDateTimeByField(
+                a,
+                "sta"
+            )
+
+            -
+
+            getFlightDateTimeByField(
+                b,
+                "sta"
+            )
+
+    );
+
+
+    // -----------------------------------------------------
+    // SORT DEPARTURES
+    // -----------------------------------------------------
+
+    departures.sort(
+        (
+            a,
+            b
+        ) =>
+
+            getFlightDateTimeByField(
+                a,
+                "std"
+            )
+
+            -
+
+            getFlightDateTimeByField(
+                b,
+                "std"
+            )
+
+    );
+
+
+
+    const usedArrivals =
+        new Set();
+
+
+    const results =
+        [];
+
+
+    // -----------------------------------------------------
+    // PROCESS EVERY HAN DEPARTURE
+    // -----------------------------------------------------
+
+    departures.forEach(
+        departure => {
+
+            const departureReg =
+                String(
+                    departure.reg ??
+                    ""
+                )
+                .trim()
+                .toUpperCase();
+
+
+            const departureTime =
+                getFlightDateTimeByField(
+                    departure,
+                    "std"
+                );
+
+
+            // -------------------------------------------------
+            // FIND PREVIOUS ARRIVAL
+            // -------------------------------------------------
+
+            const candidates =
+                arrivals.filter(
+                    arrival => {
+
+                        if (
+                            usedArrivals.has(
+                                arrival
+                            )
+                        ) {
+
+                            return false;
+
+                        }
+
+
+                        const arrivalReg =
+                            String(
+                                arrival.reg ??
+                                ""
+                            )
+                            .trim()
+                            .toUpperCase();
+
+
+                        if (
+                            arrivalReg !==
+                            departureReg
+                        ) {
+
+                            return false;
+
+                        }
+
+
+                        const arrivalTime =
+                            getFlightDateTimeByField(
+                                arrival,
+                                "sta"
+                            );
+
+
+                        if (
+                            !isFinite(
+                                arrivalTime
+                            )
+                        ) {
+
+                            return false;
+
+                        }
+
+
+                        return (
+                            arrivalTime <
+                            departureTime
+                        );
+
+                    }
+                );
+
+
+            // -------------------------------------------------
+           
+            // -------------------------------------------------
+
+            if (
+                candidates.length
+            ) {
+
+                candidates.sort(
+                    (
+                        a,
+                        b
+                    ) =>
+
+                        getFlightDateTimeByField(
+                            b,
+                            "sta"
+                        )
+
+                        -
+
+                        getFlightDateTimeByField(
+                            a,
+                            "sta"
+                        )
+
+                );
+
+
+                const arrival =
+                    candidates[0];
+
+
+                usedArrivals.add(
+                    arrival
+                );
+
+
+                results.push({
+
+                    arrival:
+                        arrival,
+
+                    departure:
+                        departure,
+
+                    isPair:
+                        true
+
+                });
+
+            }
+
+
+            // -------------------------------------------------
+           
+            // -------------------------------------------------
+
+            else {
+
+                results.push({
+
+                    arrival:
+                        null,
+
+                    departure:
+                        departure,
+
+                    isPair:
+                        false
+
+                });
+
+            }
+
+        }
+    );
+
+
+    // -----------------------------------------------------
+    // FINAL SORT BY DEP / STD
+    // -----------------------------------------------------
+
+    results.sort(
+        (
+            a,
+            b
+        ) =>
+
+            getFlightDateTimeByField(
+                a.departure,
+                "std"
+            )
+
+            -
+
+            getFlightDateTimeByField(
+                b.departure,
+                "std"
+            )
+
+    );
+
+
+    return results;
+
+}
+
+
+// =========================================================
+// FORMAT SHORT DATE
+// =========================================================
+
+function formatShortDate(
+    flight
+) {
+
+    if (
+        !flight
+    ) {
+
+        return "";
+
+    }
+
+
+    const date =
+        parseDate(
+            flight.date
+        );
+
+
+    if (
+        !date
+    ) {
+
+        return String(
+            flight.date ??
+            ""
+        );
+
+    }
+
+
+    const day =
+        String(
+            date.day
+        ).padStart(
+            2,
+            "0"
+        );
+
+
+    const monthNames = [
+
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec"
+
+    ];
+
+
+    return (
+
+        day +
+
+        "-" +
+
+        monthNames[
+            date.month - 1
+        ]
+
+    );
+
+}
+
+
+// =========================================================
+// FORMAT FLIGHT TIME
+// =========================================================
+
+function formatFlightTime(
+    flight,
+    field
+) {
+
+    if (
+        !flight
+    ) {
+
+        return "--:--";
+
+    }
+
+
+    const value =
+        flight[field];
+
+
+    if (
+        value === null ||
+        value === undefined ||
+        String(
+            value
+        ).trim() === ""
+    ) {
+
+        return "--:--";
+
+    }
+
+
+    if (
+        value instanceof Date
+    ) {
+
+        return (
+
+            String(
+                value.getHours()
+            ).padStart(
+                2,
+                "0"
+            )
+
+            +
+
+            ":"
+
+            +
+
+            String(
+                value.getMinutes()
+            ).padStart(
+                2,
+                "0"
+            )
+
+        );
+
+    }
+
+
+    const parsed =
+        parseTime(
+            value
+        );
+
+
+    if (
+        parsed
+    ) {
+
+        return (
+
+            String(
+                parsed.hour
+            ).padStart(
+                2,
+                "0"
+            )
+
+            +
+
+            ":"
+
+            +
+
+            String(
+                parsed.minute
+            ).padStart(
+                2,
+                "0"
+            )
+
+        );
+
+    }
+
+
+    return String(
+        value
+    ).trim();
+
+}
+
+
+// =========================================================
+// FORMAT AIRCRAFT TYPE
+// =========================================================
+
+function formatAircraftType(
+    value
+) {
+
+    let aircraft =
+        String(
+            value ?? ""
+        ).trim();
+
+
+    if (
+        !aircraft
+    ) {
+
+        return "";
+
+    }
+
+
+    if (
+        /^\d+$/.test(
+            aircraft
+        )
+    ) {
+
+        aircraft =
+            "A" +
+            aircraft;
+
+    }
+
+
+    return aircraft;
+
+}
+
+
+// =========================================================
+// GET CREW SOURCE LABEL
+// =========================================================
+
+function getCrewSourceLabel(
+    flight,
+    crew
+) {
+
+    const source =
+        findSourceForCrew(
+            flight,
+            crew
+        );
+
+
+    return source
+        ? String(
+            source.flight
+        )
+        : "HN";
+
+}
+
+
+// =========================================================
+// GET CREW RESULT FOR HAN ROW
+// =========================================================
+// =========================================================
+
+function getHANCrewResult(
+    arrival,
+    departure,
+    isPair
+) {
+
+    if (
+        !departure ||
+        !departure.crew ||
+        !departure.crew.length
+    ) {
+
+        return "—";
+
+    }
+
+
+    // -----------------------------------------------------
+
+    // -----------------------------------------------------
+
+    if (
+        !isPair ||
+        !arrival
+    ) {
+
+        return buildCrewSourceSummary(
+            departure
+        );
+
+    }
+
+
+    if (
+        !arrival.crew ||
+        !arrival.crew.length
+    ) {
+
+        return buildCrewSourceSummary(
+            departure
+        );
+
+    }
+
+
+    // -----------------------------------------------------
+    // -----------------------------------------------------
+
+    const departureSet =
+        new Set(
+
+            departure.crew.map(
+                crew =>
+                    normalizeName(
+                        crew.name
+                    )
+            )
+
+        );
+
+
+    const keptCount =
+        arrival.crew.filter(
+            crew =>
+                departureSet.has(
+                    normalizeName(
+                        crew.name
+                    )
+                )
+        ).length;
+
+
+    const totalArrivalCrew =
+        arrival.crew.length;
+
+
+    const keptPercent =
+        totalArrivalCrew > 0
+            ? (
+                keptCount /
+                totalArrivalCrew
+            ) * 100
+            : 0;
+
+
+    // -----------------------------------------------------
+
+    // -----------------------------------------------------
+
+    if (
+        keptPercent > 50
+    ) {
+
+        return "X";
+
+    }
+
+
+    // -----------------------------------------------------
+    // -----------------------------------------------------
+
+    return buildCrewSourceSummary(
+        departure
+    );
+
+}
+
+
+// =========================================================
+// BUILD CREW SOURCE SUMMARY
+// =========================================================
+
+function buildCrewSourceSummary(flight) {
+
+    if (
+        !flight ||
+        !flight.crew ||
+        !flight.crew.length
+    ) {
+        return "—";
+    }
+
+
+    let hasHN = false;
+
+
+
+    const sourceGroups =
+        new Map();
+
+
+    flight.crew.forEach(
+        crew => {
+
+            const source =
+                getCrewSourceLabel(
+                    flight,
+                    crew
+                );
+
+
+            /*
+            
+             */
+            if (
+                source === "HN"
+            ) {
+
+                hasHN = true;
+
+                return;
+
+            }
+
+
+            /*
+            
+             */
+            let role =
+                String(
+                    crew.role ?? ""
+                ).trim();
+
+
+           
+            if (
+                role.includes("/")
+            ) {
+
+                role =
+                    role
+                    .split("/")[0]
+                    .trim();
+
+            }
+
+
+            if (
+                !role
+            ) {
+
+                role = "CREW";
+
+            }
+
+
+            /*
+            
+             */
+            if (
+                !sourceGroups.has(source)
+            ) {
+
+                sourceGroups.set(
+                    source,
+                    new Map()
+                );
+
+            }
+
+
+            const roleGroups =
+                sourceGroups.get(source);
+
+
+            /*
+            
+             */
+            if (
+                !roleGroups.has(role)
+            ) {
+
+                roleGroups.set(
+                    role,
+                    0
+                );
+
+            }
+
+
+            roleGroups.set(
+                role,
+                roleGroups.get(role) + 1
+            );
+
+        }
+    );
+
+
+    /*
+     * ---------------------------------------------------
+     */
+
+    if (
+        !hasHN &&
+        sourceGroups.size === 1
+    ) {
+
+        return Array.from(
+            sourceGroups.keys()
+        )[0];
+
+    }
+
+
+    /*
+     * ---------------------------------------------------
+     */
+
+    const parts = [];
+
+if (hasHN) {
+    parts.push("HN");
+}
+
+sourceGroups.forEach(
+    (roleGroups, source) => {
+
+        const roleParts = [];
+
+        roleGroups.forEach(
+            (count, role) => {
+                roleParts.push(
+                    count + role
+                );
+            }
+        );
+
+        parts.push(
+            roleParts.join("/") +
+            " " +
+            source
+        );
+    }
+);
+
+return parts.length
+    ? parts.join("\n")
+    : "—";
+
+    /*
+    
+     */
+    sourceGroups.forEach(
+        (
+            roleGroups,
+            source
+        ) => {
+
+            const roleParts =
+                [];
+
+
+            /*
+             
+             */
+            roleGroups.forEach(
+                (
+                    count,
+                    role
+                ) => {
+
+                    roleParts.push(
+                        count + role
+                    );
+
+                }
+            );
+
+
+            /*
+             
+             */
+
+            parts.push(
+                roleParts.join("/") +
+                " " +
+                source
+            );
+
+        }
+    );
+
+
+    /*
+     
+     */
+
+    return parts.length
+        ? parts.join(" + ")
+        : "—";
+
+}
+
+
+// =========================================================
+// SHOW HAN AIRCRAFT PAIRS
+// =========================================================
+
+function showHANAircraftPairs() {
+
+    if (
+        !flights ||
+        !flights.length
+    ) {
+
+        showError(
+            "Vui lòng tải file Crew List trước."
+        );
+
+        return;
+
+    }
+
+
+    const results =
+        getHANAircraftPairs();
+
+
+    if (
+        !results.length
+    ) {
+
+        resultBox.innerHTML = `
+
+            <div
+                class="han-pair-empty"
+            >
+
+                Không tìm thấy chuyến bay
+                xuất phát từ HAN.
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    let rowsHtml =
+        "";
+
+
+    let pairCount =
+        0;
+
+
+    let singleCount =
+        0;
+
+
+    results.forEach(
+        item => {
+
+            const arrival =
+                item.arrival;
+
+
+            const departure =
+                item.departure;
+
+
+            if (
+                item.isPair
+            ) {
+
+                pairCount++;
+
+            }
+            else {
+
+                singleCount++;
+
+            }
+
+
+            // -------------------------------------------------
+            
+            // -------------------------------------------------
+
+            const date =
+                formatShortDate(
+                    departure
+                );
+
+
+            const departureFlight =
+                "VJ" +
+                departure.flight;
+
+
+            // -------------------------------------------------
+            
+            // -------------------------------------------------
+
+            const crewDisplay =
+                getHANCrewResult(
+                    arrival,
+                    departure,
+                    item.isPair
+                );
+
+
+            let flightDisplay =
+                departureFlight;
+
+
+            let routeDisplay =
+                departure.dep +
+                "-" +
+                departure.arr;
+
+
+            let arrTime =
+                "--:--";
+
+
+            // -------------------------------------------------
+            
+            // -------------------------------------------------
+
+            if (
+                arrival
+            ) {
+
+                const arrivalFlight =
+                    "VJ" +
+                    arrival.flight;
+
+
+                flightDisplay =
+                    arrivalFlight +
+                    " / " +
+                    departureFlight;
+
+
+                routeDisplay =
+                    arrival.dep +
+                    "-" +
+                    arrival.arr +
+                    " / " +
+                    departure.dep +
+                    "-" +
+                    departure.arr;
+
+
+                arrTime =
+                    formatFlightTime(
+                        arrival,
+                        "sta"
+                    );
+
+            }
+
+
+            // -------------------------------------------------
+            // DEP TIME
+            // -------------------------------------------------
+
+            const depTime =
+                formatFlightTime(
+                    departure,
+                    "std"
+                );
+
+
+            // -------------------------------------------------
+            // TYPE
+            // -------------------------------------------------
+
+            const type =
+                String(
+                    departure.type ??
+                    ""
+                ).trim()
+
+                ||
+
+                String(
+                    arrival
+                        ? arrival.type
+                        : ""
+                ).trim();
+
+
+            // -------------------------------------------------
+            // REG
+            // -------------------------------------------------
+
+            const reg =
+                String(
+                    departure.reg ??
+                    ""
+                ).trim();
+
+
+            // -------------------------------------------------
+            // AIRCRAFT TYPE
+            // -------------------------------------------------
+
+            const aircraft =
+                formatAircraftType(
+                    departure.aircraft
+                )
+
+                ||
+
+                formatAircraftType(
+                    arrival
+                        ? arrival.aircraft
+                        : ""
+                );
+
+
+            rowsHtml += `
+
+                <tr>
+
+                    <td>
+                        ${escapeHtml(
+                            date
+                        )}
+                    </td>
+
+
+                    <td
+                        class="han-pair-crew"
+                    >
+                        ${escapeHtml(
+                            crewDisplay
+                        )}
+                    </td>
+
+
+                    <td
+                        class="han-pair-flight"
+                    >
+
+                        ${escapeHtml(
+                            flightDisplay
+                        )}
+
+                    </td>
+
+
+                    <td
+                        class="han-pair-route"
+                    >
+
+                        ${escapeHtml(
+                            routeDisplay
+                        )}
+
+                    </td>
+
+
+                    <td>
+
+                        ${escapeHtml(
+                            type
+                        )}
+
+                    </td>
+
+
+                    <td
+                        class="han-pair-reg"
+                    >
+
+                        ${escapeHtml(
+                            reg
+                        )}
+
+                    </td>
+
+
+                    <td>
+
+                        ${escapeHtml(
+                            aircraft
+                        )}
+
+                    </td>
+
+
+                    <td
+                        class="han-pair-arr"
+                    >
+
+                        ${escapeHtml(
+                            arrTime
+                        )}
+
+                    </td>
+
+
+                    <td
+                        class="han-pair-dep"
+                    >
+
+                        ${escapeHtml(
+                            depTime
+                        )}
+
+                    </td>
+
+                </tr>
+
+            `;
+
+        }
+    );
+
+
+    // =====================================================
+    // RESULT TABLE
+    // =====================================================
+
+    resultBox.innerHTML = `
+
+        <div
+            class="han-pair-result"
+        >
+
+            <div
+                class="han-pair-summary"
+            >
+
+                ✈️ CÁC CHUYẾN BAY
+                XUẤT PHÁT TỪ HAN
+
+                <br>
+
+                <strong>
+                    ${results.length}
+                </strong>
+                chuyến
+
+                &nbsp; | &nbsp;
+
+                <strong>
+                    ${pairCount}
+                </strong>
+                cặp
+
+                &nbsp; | &nbsp;
+
+                <strong>
+                    ${singleCount}
+                </strong>
+                chuyến không có ARR trước đó
+
+            </div>
+
+
+            <table
+                class="han-pair-table"
+            >
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Date
+                        </th>
+
+                        <th>
+                            Crew
+                        </th>
+
+                        <th>
+                            Flight
+                        </th>
+
+                        <th>
+                            Route
+                        </th>
+
+                        <th>
+                            Type
+                        </th>
+
+                        <th>
+                            A/C Regn
+                        </th>
+
+                        <th>
+                            A/C Type
+                        </th>
+
+                        <th>
+                            ARR
+                        </th>
+
+                        <th>
+                            DEP
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    ${rowsHtml}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    `;
+
+}
+
+
+// =========================================================
+// HAN PAIR BUTTON EVENT
+// =========================================================
+
+if (
+    hanPairBtn
+) {
+
+    hanPairBtn.addEventListener(
+        "click",
+        showHANAircraftPairs
+    );
+
+}
