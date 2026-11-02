@@ -126,6 +126,110 @@ if (excelFile) {
 }
 
 
+// ======================================
+// AUTO LOAD CREW LIST FROM SUPABASE
+// ======================================
+
+const SUPABASE_API =
+    "https://sowppuoliusghxjfgbyp.supabase.co/functions/v1/get-crewlist";
+
+const SUPABASE_ANON_KEY =
+    "sb_publishable_2KhjlXnIVP30dNUrsIVhCg_Hal6Aiw0";
+
+
+async function loadLatestCrewList() {
+
+    try {
+
+        statusBox.textContent =
+            "⏳ Đang kết nối Crew List...";
+
+        // 1. Request signed URL
+        const apiResponse = await fetch(SUPABASE_API, {
+            method: "GET",
+            headers: {
+                "apikey": SUPABASE_ANON_KEY
+            },
+            cache: "no-store"
+        });
+
+        if (!apiResponse.ok) {
+            throw new Error(
+                "API Error: " + apiResponse.status
+            );
+        }
+
+        const apiData = await apiResponse.json();
+
+        if (!apiData.success || !apiData.signedUrl) {
+            throw new Error("Không lấy được Crew List URL");
+        }
+
+        // 2. Download Excel
+        statusBox.textContent =
+            "⏳ Đang tải Crew List mới nhất...";
+
+        const excelResponse = await fetch(
+            apiData.signedUrl,
+            { cache: "no-store" }
+        );
+
+        if (!excelResponse.ok) {
+            throw new Error("Không tải được file Excel");
+        }
+
+        const arrayBuffer =
+            await excelResponse.arrayBuffer();
+
+        // 3. Read Excel
+        const workbook = XLSX.read(
+            arrayBuffer,
+            {
+                type: "array",
+                cellDates: false
+            }
+        );
+
+        const sheet = workbook.Sheets[
+            workbook.SheetNames[0]
+        ];
+
+        const rows = XLSX.utils.sheet_to_json(
+            sheet,
+            {
+                header: 1,
+                defval: ""
+            }
+        );
+
+        // 4. Update filename
+        fileName.textContent =
+            apiData.fileName + " (AUTO SYNC)";
+
+        // 5. Use existing parser
+        parseCrewList(rows);
+
+        console.log("Crew List synchronized!");
+
+    } catch (error) {
+
+        console.error(
+            "AUTO SYNC ERROR:",
+            error
+        );
+
+        statusBox.textContent =
+            "⚠️ Không thể tự động tải Crew List. Vui lòng tải file thủ công.";
+
+    }
+
+}
+
+
+// Automatically load when opening website
+loadLatestCrewList();
+
+
 // =========================================================
 // NORMALIZE HEADER
 // =========================================================
@@ -4564,15 +4668,14 @@ function showHANAircraftPairs() {
                     </td>
 
 
-                    <td
-                        class="han-pair-flight"
-                    >
-
-                        ${escapeHtml(
-                            flightDisplay
-                        )}
-
-                    </td>
+                    <td class="han-pair-flight">
+    <span>${escapeHtml(arrival ? "VJ" + arrival.flight + " / " : "")}</span><span
+        class="flight-hover-target"
+        data-flight="${escapeHtml(String(departure.flight))}"
+        data-date="${escapeHtml(String(departure.date ?? ""))}"
+        style="cursor:default;text-decoration:none;"
+    >${escapeHtml("VJ" + departure.flight)}</span>
+</td>
 
 
                     <td
@@ -4750,6 +4853,189 @@ function showHANAircraftPairs() {
 
 
 // =========================================================
+// FLIGHT ARRIVAL TOOLTIP - FIXED VERSION
+// =========================================================
+
+(function initFlightArrivalTooltip() {
+
+    if (window.flightArrivalTooltipInitialized) return;
+    window.flightArrivalTooltipInitialized = true;
+
+    const tooltip = document.createElement("div");
+
+    tooltip.id = "flightArrivalTooltip";
+
+    tooltip.style.cssText = `
+        display:none;
+        position:fixed;
+        z-index:2147483647;
+        min-width:220px;
+        max-width:300px;
+        padding:12px 15px;
+        background:#17212b;
+        color:white;
+        border:1px solid #64748b;
+        border-radius:8px;
+        box-shadow:0 8px 25px rgba(0,0,0,.4);
+        font:13px/1.6 Arial,sans-serif;
+        pointer-events:none;
+    `;
+
+    document.body.appendChild(tooltip);
+
+
+    function showTooltip(target, event) {
+
+        const row = target.closest("tr");
+
+        const crewText =
+            row?.querySelector(".han-pair-crew")?.textContent || "";
+
+        const dateValue = target.dataset.date || "";
+
+        
+
+        const numbers = [
+            ...crewText.matchAll(/\b(?:VJ)?(\d{2,4})\b/gi)
+        ]
+        .map(match => normalizeFlightNumber(match[1]))
+        .filter((value, index, array) =>
+            value && array.indexOf(value) === index
+        );
+
+        const details = numbers.map(number => {
+
+            const matches = flights.filter(f =>
+                normalizeFlightNumber(f.flight) === number
+            );
+
+            const flight =
+                matches.find(f =>
+                    String(f.date ?? "").trim() === dateValue.trim()
+                ) ||
+                (matches.length === 1 ? matches[0] : null);
+
+            let time = "Không tìm thấy";
+
+            let route = "";
+
+            if (flight) {
+
+                const eta = formatFlightTime(flight, "eta");
+
+                time = eta !== "--:--"
+                    ? eta
+                    : formatFlightTime(flight, "sta");
+
+                route = `${flight.dep || ""} → ${flight.arr || ""}`;
+            }
+
+            return { number, time, route };
+        });
+
+
+        tooltip.innerHTML = `
+            <div style="
+                font-weight:bold;
+                font-size:13px;
+                margin-bottom:8px;
+                color:#7dd3fc;
+            ">
+                FLIGHT ARRIVAL INFORMATION
+            </div>
+
+            ${
+                details.length
+                ? details.map(item => `
+                    <div style="
+                        display:flex;
+                        justify-content:space-between;
+                        align-items:center;
+                        gap:15px;
+                        padding:6px 0;
+                        border-top:1px solid #475569;
+                    ">
+                        <div>
+                            <strong>VJ${escapeHtml(item.number)}</strong>
+                            <div style="font-size:11px;color:#cbd5e1">
+                                ${escapeHtml(item.route)}
+                            </div>
+                        </div>
+
+                        <strong style="color:#86efac">
+                            ${escapeHtml(item.time)}
+                        </strong>
+                    </div>
+                `).join("")
+                : `<div>Không tìm thấy số hiệu chuyến bay trong mô tả tổ bay.</div>`
+            }
+
+            <div style="
+                margin-top:8px;
+                font-size:10px;
+                color:#94a3b8;
+            ">
+                ETA ưu tiên, nếu trống sử dụng STA
+            </div>
+        `;
+
+        tooltip.style.display = "block";
+
+        const x = event.clientX + 15;
+        const y = event.clientY + 15;
+
+        const rect = tooltip.getBoundingClientRect();
+
+        tooltip.style.left =
+            Math.max(5, Math.min(x, window.innerWidth - rect.width - 10)) + "px";
+
+        tooltip.style.top =
+            Math.max(5, Math.min(y, window.innerHeight - rect.height - 10)) + "px";
+    }
+
+
+    
+
+    document.addEventListener("pointerover", event => {
+
+        const target = event.target.closest(".flight-hover-target");
+
+if (!target || !resultBox.contains(target)) return;
+
+        showTooltip(target, event);
+
+    });
+
+
+    document.addEventListener("pointermove", event => {
+
+        if (tooltip.style.display !== "block") return;
+
+        const x = event.clientX + 15;
+        const y = event.clientY + 15;
+
+        const rect = tooltip.getBoundingClientRect();
+
+        tooltip.style.left =
+            Math.max(5, Math.min(x, window.innerWidth - rect.width - 10)) + "px";
+
+        tooltip.style.top =
+            Math.max(5, Math.min(y, window.innerHeight - rect.height - 10)) + "px";
+
+    });
+
+
+    document.addEventListener("pointerout", event => {
+
+        if (event.target.closest?.(".flight-hover-target")) {
+            tooltip.style.display = "none";
+        }
+
+    });
+
+})();
+
+// =========================================================
 // HAN PAIR BUTTON EVENT
 // =========================================================
 
@@ -4763,3 +5049,4 @@ if (
     );
 
 }
+
