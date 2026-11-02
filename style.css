@@ -1972,3 +1972,14 @@ body::after {
     white-space: pre-line !important;
     vertical-align: middle;
 }
+
+.flight-hover-target {
+    text-decoration: none !important;
+    border-bottom: none !important;
+    cursor: default;
+}
+
+.flight-hover-target:hover {
+    text-decoration: none !important;
+    border-bottom: none !important;
+}
